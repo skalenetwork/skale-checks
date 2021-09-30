@@ -1,16 +1,11 @@
-from server import Server
+import re
+
+from server import Server, is_status_ok, construct_ok_response, construct_err_response
 
 WATCHDOG_TIMEOUT_DEFAULT = 10
 WATCHDOG_PORT = 3009
 
 
-class WatchdogConnectionError(Exception):
-    pass
-
-
-class WatchdogClient:
-    def __init__(self, node_ip, timeout=WATCHDOG_TIMEOUT_DEFAULT):
-        self.watchdog = WatchdogServer(node_ip, timeout)
 
 
 class WatchdogServer(Server):
@@ -38,7 +33,7 @@ class WatchdogServer(Server):
         return super().send_request('/status/schain-containers-versions')
 
     def meta_status(self):
-        return super().send_request('/status/meta')
+        return super().send_request('/status/meta-info')
 
     def btrfs_status(self):
         return super().send_request('/status/btrfs')
@@ -59,8 +54,49 @@ class WatchdogServer(Server):
         return super().send_request('/status/check-report')
 
 
+class WatchdogClient(WatchdogServer):
+    def __init__(self, node_ip, timeout=WATCHDOG_TIMEOUT_DEFAULT):
+        super().__init__(node_ip, timeout)
+
+    def get_skale_containers(self):
+        containers = super().core_status()
+        if not is_status_ok(containers):
+            return construct_err_response(containers['payload'])
+        containers = containers['payload']
+        data = {
+            container['name']: {
+                'status': container['state']['Status'],
+                'exitCode': container['state']['ExitCode'],
+                'version': container['image']
+            } for container in containers if container['name'].startswith('skale_')
+        }
+        return construct_ok_response(data)
+
+    def get_component_versions(self):
+        data = self.get_skale_containers()
+        if not is_status_ok(data):
+            return construct_err_response(data['payload'])
+        schain_data = super().schain_containers_versions_status()
+        if not is_status_ok(schain_data):
+            return construct_err_response(schain_data['payload'])
+        meta_data = super().meta_status()
+        if not is_status_ok(meta_data):
+            return construct_err_response(meta_data['payload'])
+        versions = {
+            name: get_container_version(container['version'])
+            for name, container in data['payload'].items()
+        }
+        versions.update(schain_data['payload'])
+        versions.update(meta_data['payload'])
+        return construct_ok_response(versions)
+
+    def schain_status(self, schain_name):
+        pass
+
+
 def get_watchdog_url(node_ip):
     return f'http://{node_ip}:{WATCHDOG_PORT}'
 
 
-print(WatchdogServer('18.221.96.190').sgx_status())
+def get_container_version(image_name):
+    return re.search(':(.*)', image_name).group(0)[1:]
