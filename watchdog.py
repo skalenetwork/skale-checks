@@ -6,8 +6,6 @@ WATCHDOG_TIMEOUT_DEFAULT = 10
 WATCHDOG_PORT = 3009
 
 
-
-
 class WatchdogServer(Server):
     def __init__(self, node_ip, timeout=WATCHDOG_TIMEOUT_DEFAULT):
         self.watchdog_url = get_watchdog_url(node_ip)
@@ -90,8 +88,14 @@ class WatchdogClient(WatchdogServer):
         versions.update(meta_data['payload'])
         return construct_ok_response(versions)
 
-    def schain_status(self, schain_name):
-        pass
+    def get_schain_status(self, schain_name):
+        schains_data = super().schains_status()
+        if not is_status_ok(schains_data):
+            return construct_err_response(schains_data['payload'])
+        for schain in schains_data['payload']:
+            if schain['name'] == schain_name:
+                return construct_ok_response(schain)
+        return construct_err_response(f'sChain {schain_name} not found')
 
 
 def get_watchdog_url(node_ip):
