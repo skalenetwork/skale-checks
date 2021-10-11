@@ -5,7 +5,7 @@ ERROR_STATUS = 'error'
 OK_STATUS = 'ok'
 
 
-class Server:
+class Connector:
     def __init__(self, ip, timeout=DEFAULT_TIMEOUT):
         self.ip = ip
         self.timeout = timeout

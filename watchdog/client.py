@@ -1,12 +1,12 @@
 import re
 
-from server import Server, is_status_ok, construct_ok_response, construct_err_response
+from connector import Connector, is_status_ok, construct_ok_response, construct_err_response
 
 WATCHDOG_TIMEOUT_DEFAULT = 10
 WATCHDOG_PORT = 3009
 
 
-class WatchdogServer(Server):
+class WatchdogConnector(Connector):
     def __init__(self, node_ip, timeout=WATCHDOG_TIMEOUT_DEFAULT):
         self.watchdog_url = get_watchdog_url(node_ip)
         self.timeout = timeout
@@ -52,7 +52,7 @@ class WatchdogServer(Server):
         return super().send_request('/status/check-report')
 
 
-class WatchdogClient(WatchdogServer):
+class Watchdog(WatchdogConnector):
     def __init__(self, node_ip, timeout=WATCHDOG_TIMEOUT_DEFAULT):
         super().__init__(node_ip, timeout)
 
