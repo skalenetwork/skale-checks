@@ -1,3 +1,9 @@
+import re
+from datetime import datetime
+import datetime as dt
+
+from skale.utils.web3_utils import init_web3
+
 from adapters.client import Watchdog
 from adapters.connector import is_status_ok
 from checks.utils import get_requirements, CheckStatus
@@ -17,17 +23,21 @@ def watchdog_check(fields):
 
 
 class WatchdogChecks:
-    def __init__(self, node_ip, domain_name=None, network='mainnet'):
+    def __init__(self, node_ip, domain_name=None, network='mainnet', endpoint=None):
         self.node_ip = node_ip
         self.watchdog = Watchdog(node_ip)
         self.domain_name = domain_name
         self.requirements = get_requirements(network)
+        self.endpoint = endpoint
 
     def get(self, *checks):
         check_results = {}
         for check in checks:
-            res = self.__getattribute__(check)()
-            check_results.update(res)
+            try:
+                res = self.__getattribute__(check)()
+                check_results.update(res)
+            except AttributeError:
+                raise AttributeError(f'Check {check} is not found in WatchdogChecks')
         return check_results
 
     @watchdog_check(['sgx', 'sgx_version'])
@@ -106,3 +116,42 @@ class WatchdogChecks:
                 if components[name]['status'] != CONTAINER_RUNNING_STATUS:
                     container_statuses = False
         return CheckStatus(container_statuses)
+
+    @watchdog_check(['ssl'])
+    def get_ssl_checks(self):
+        ssl_data = self.watchdog.ssl_status()
+        if not is_status_ok(ssl_data):
+            return CheckStatus.UNKNOWN
+        ssl_data = ssl_data['payload']
+        if ssl_data.get('is_empty') is True:
+            return CheckStatus.FAILED
+        else:
+            cert_host = ssl_data.get('issued_to')
+            print(ssl_data)
+            try:
+                regexp = re.compile(cert_host[1:])
+            except Exception:
+                return CheckStatus.FAILED
+            if not regexp.search(self.domain_name):
+                return CheckStatus.FAILED
+            raw_date = ssl_data.get('expiration_date')
+            expiration_date = datetime.strptime(raw_date, '%Y-%m-%dT%H:%M:%S')
+            offset = dt.timedelta(weeks=self.requirements['ssl_gap_weeks'])
+            min_valid_time = (datetime.now() + offset).timestamp()
+            if expiration_date.timestamp() < min_valid_time:
+                return CheckStatus.FAILED
+            return CheckStatus.PASSED
+
+    @watchdog_check(['endpoint', 'trusted_endpoint', 'endpoint_speed'])
+    def get_endpoint_checks(self):
+        endpoint_data = self.watchdog.endpoint_status()
+        if not is_status_ok(endpoint_data):
+            return CheckStatus.UNKNOWN
+        endpoint_data = endpoint_data['payload']
+        current_block = init_web3(self.endpoint).eth.blockNumber
+        blocks_gap = current_block - endpoint_data['block_number']
+        endpoint_status = CheckStatus(blocks_gap <= self.requirements['blocks_gap'])
+        trusted_endpoint = CheckStatus(endpoint_data['trusted'])
+        endpoint_speed = CheckStatus(endpoint_data['call_speed'] <=
+                                     self.requirements['call_speed'])
+        return endpoint_status, trusted_endpoint, endpoint_speed
