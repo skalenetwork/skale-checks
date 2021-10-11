@@ -1,4 +1,4 @@
-default:
+testnet:
   blocks_gap: 40
   logs_gap: 1800
   single_node_balance: 0.1
@@ -6,23 +6,23 @@ default:
   call_speed: 5
   versions:
     sgx: ['1.77.0']
-    schain: '3.7.5-beta.4'
-    ima: '1.0.0-beta.13'
-    skale_admin: '2.0.1-beta.8'
-    skale_api: '2.0.1-beta.8'
-    skale_transaction-manager: '2.0.1-beta.4'
-    skale_watchdog: '2.0.0-beta.2'
-    skale_bounty: '2.0.1-beta.1'
-    skale_nginx: '1.19.6'
-    skale_filebeat: '7.3.1'
-    node-cli: '2.0.1-beta.3'
-    configs: '2.0.1-testnet.1'
+    schain: ['3.7.5-beta.4']
+    ima: ['1.0.0-beta.13']
+    skale_admin: ['2.0.1-beta.8']
+    skale_api: ['2.0.1-beta.8']
+    skale_transaction-manager: ['2.0.1-beta.4']
+    skale_watchdog: ['2.0.0-beta.2']
+    skale_bounty: ['2.0.1-beta.1']
+    skale_nginx: ['1.19.6']
+    skale_filebeat: ['7.3.1']
+    node-cli: ['2.0.1-beta.3']
+    configs: ['2.0.1-testnet.1']
     docker-lvmpy: ['1.0.1-stable.3', '1.0.1-beta.3']
   hardware:
-    cores: 8
+    cpu_total_cores: 8
     memory: 32000000000
     swap: 15000000000
-    storage: 200000000
+    attached_storage_size: 200000000
 mainnet:
   blocks_gap: 40
   logs_gap: 1800
@@ -31,20 +31,20 @@ mainnet:
   call_speed: 5
   versions:
     sgx: [ '1.77.0' ]
-    schain: '3.7.5-stable.0'
-    ima: '1.0.0-stable.1'
-    skale_admin: '2.0.2'
-    skale_api: '2.0.2'
-    skale_transaction-manager: '2.0.2'
-    skale_watchdog: '2.0.2-stable.0'
-    skale_bounty: '2.0.2-stable.0'
-    skale_nginx: '1.19.6'
-    skale_filebeat: '7.3.1'
-    node-cli: '2.0.2'
-    configs: '2.0.2'
-    docker-lvmpy: '1.0.1-stable.3'
+    schain: ['3.7.5-stable.0']
+    ima: ['1.0.0-stable.1']
+    skale_admin: ['2.0.2']
+    skale_api: ['2.0.2']
+    skale_transaction-manager: ['2.0.2']
+    skale_watchdog: ['2.0.2-stable.0']
+    skale_bounty: ['2.0.2-stable.0']
+    skale_nginx: ['1.19.6']
+    skale_filebeat: ['7.3.1']
+    node-cli: ['2.0.2']
+    configs: ['2.0.2']
+    docker-lvmpy: ['1.0.1-stable.3']
   hardware:
-    cores: 8
+    cpu_total_cores: 8
     memory: 32000000000
     swap: 0
-    storage: 19000000000
+    attached_storage_size: 19000000000
