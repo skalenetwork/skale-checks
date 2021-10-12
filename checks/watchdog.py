@@ -28,7 +28,7 @@ class WatchdogChecks:
         self.watchdog = Watchdog(node_ip)
         self.domain_name = domain_name
         self.requirements = get_requirements(network)
-        self.endpoint = endpoint
+        self.eth_endpoint = endpoint
 
     def get(self, *checks):
         check_results = {}
@@ -40,55 +40,35 @@ class WatchdogChecks:
                 raise AttributeError(f'Check {check} is not found in WatchdogChecks')
         return check_results
 
-    @watchdog_check(['sgx', 'sgx_version'])
-    def sgx(self):
-        sgx_status = self.watchdog.sgx_status()
-        if not is_status_ok(sgx_status):
-            return CheckStatus.UNKNOWN, CheckStatus.UNKNOWN
-        data = sgx_status['payload']
-        is_sgx_working = CheckStatus(data['status'] == 0)
-        sgx_version_check = CheckStatus(data['sgx_wallet_version'] in
-                                        self.requirements['versions']['sgx'])
-        return is_sgx_working, sgx_version_check
-
-    @watchdog_check(['btrfs'])
-    def btrfs(self):
-        btrfs_status = self.watchdog.btrfs_status()
-        if not is_status_ok(btrfs_status):
+    @watchdog_check(['core'])
+    def core(self):
+        components = self.watchdog.get_skale_containers()
+        if not is_status_ok(components):
             return CheckStatus.UNKNOWN
-        return CheckStatus(btrfs_status['payload']['kernel_module'])
+        components = components['payload']
+        container_statuses = True
+        for name in components:
+            if name in self.requirements['versions'].keys():
+                if components[name]['status'] != CONTAINER_RUNNING_STATUS:
+                    container_statuses = False
+        return CheckStatus(container_statuses)
 
-    @watchdog_check(['public_ip'])
-    def public_ip(self):
-        public_ip_status = self.watchdog.public_ip()
-        if not is_status_ok(public_ip_status):
+    @watchdog_check(['endpoint', 'trusted_endpoint', 'endpoint_speed'])
+    def endpoint(self):
+        endpoint_data = self.watchdog.endpoint_status()
+        if not is_status_ok(endpoint_data):
             return CheckStatus.UNKNOWN
-        return CheckStatus(public_ip_status['payload']['public_ip'] == self.node_ip)
-
-    @watchdog_check(['hardware'])
-    def hardware(self):
-        hardware_status = self.watchdog.hardware_status()
-        if not is_status_ok(hardware_status):
-            return CheckStatus.UNKNOWN
-        hardware_check = True
-        hardware_data = hardware_status['payload']
-        for key in self.requirements['hardware'].keys():
-            if hardware_data[key] < self.requirements['hardware'][key]:
-                hardware_check = False
-        return CheckStatus(hardware_check)
-
-    @watchdog_check(['validator_nodes'])
-    def validator_nodes(self):
-        validator_nodes_data = self.watchdog.validator_nodes()
-        if not is_status_ok(validator_nodes_data):
-            return CheckStatus.UNKNOWN
-        validator_nodes = validator_nodes_data['payload']
-        if len(validator_nodes) == 0:
-            return CheckStatus.PASSED
-        for node in validator_nodes:
-            if node[2] is False:
-                return CheckStatus.FAILED
-        return CheckStatus.PASSED
+        endpoint_data = endpoint_data['payload']
+        if self.eth_endpoint:
+            current_block = init_web3(self.eth_endpoint).eth.blockNumber
+            blocks_gap = current_block - endpoint_data['block_number']
+            endpoint_status = CheckStatus(blocks_gap <= self.requirements['blocks_gap'])
+        else:
+            endpoint_status = CheckStatus.UNKNOWN
+        trusted_endpoint = CheckStatus(endpoint_data['trusted'])
+        endpoint_speed = CheckStatus(endpoint_data['call_speed'] <=
+                                     self.requirements['call_speed'])
+        return endpoint_status, trusted_endpoint, endpoint_speed
 
     @watchdog_check(['versions'])
     def versions(self):
@@ -104,21 +84,60 @@ class WatchdogChecks:
                     component_versions = False
         return CheckStatus(component_versions)
 
-    @watchdog_check(['core'])
-    def core(self):
-        components = self.watchdog.get_skale_containers()
-        if not is_status_ok(components):
+    @watchdog_check(['sgx', 'sgx_version'])
+    def sgx(self):
+        sgx_status = self.watchdog.sgx_status()
+        if not is_status_ok(sgx_status):
+            return CheckStatus.UNKNOWN, CheckStatus.UNKNOWN
+        data = sgx_status['payload']
+        is_sgx_working = CheckStatus(data['status'] == 0)
+        sgx_version_check = CheckStatus(data['sgx_wallet_version'] in
+                                        self.requirements['versions']['sgx'])
+        return is_sgx_working, sgx_version_check
+
+    @watchdog_check(['hardware'])
+    def hardware(self):
+        hardware_status = self.watchdog.hardware_status()
+        if not is_status_ok(hardware_status):
             return CheckStatus.UNKNOWN
-        components = components['payload']
-        container_statuses = True
-        for name in components:
-            if name in self.requirements['versions'].keys():
-                if components[name]['status'] != CONTAINER_RUNNING_STATUS:
-                    container_statuses = False
-        return CheckStatus(container_statuses)
+        hardware_check = True
+        hardware_data = hardware_status['payload']
+        for key in self.requirements['hardware'].keys():
+            if hardware_data[key] < self.requirements['hardware'][key]:
+                hardware_check = False
+        return CheckStatus(hardware_check)
+
+    @watchdog_check(['btrfs'])
+    def btrfs(self):
+        btrfs_status = self.watchdog.btrfs_status()
+        if not is_status_ok(btrfs_status):
+            return CheckStatus.UNKNOWN
+        return CheckStatus(btrfs_status['payload']['kernel_module'])
+
+    @watchdog_check(['public_ip'])
+    def public_ip(self):
+        public_ip_status = self.watchdog.public_ip()
+        if not is_status_ok(public_ip_status):
+            return CheckStatus.UNKNOWN
+        return CheckStatus(public_ip_status['payload']['public_ip'] == self.node_ip)
+
+    @watchdog_check(['validator_nodes'])
+    def validator_nodes(self):
+        validator_nodes_data = self.watchdog.validator_nodes()
+        if not is_status_ok(validator_nodes_data):
+            return CheckStatus.UNKNOWN
+        validator_nodes = validator_nodes_data['payload']
+        if len(validator_nodes) == 0:
+            return CheckStatus.PASSED
+        for node in validator_nodes:
+            if node[2] is False:
+                return CheckStatus.FAILED
+        return CheckStatus.PASSED
 
     @watchdog_check(['ssl'])
-    def get_ssl_checks(self):
+    def ssl(self):
+        if not self.domain_name:
+            return CheckStatus.UNKNOWN
         ssl_data = self.watchdog.ssl_status()
         if not is_status_ok(ssl_data):
             return CheckStatus.UNKNOWN
@@ -127,7 +146,6 @@ class WatchdogChecks:
             return CheckStatus.FAILED
         else:
             cert_host = ssl_data.get('issued_to')
-            print(ssl_data)
             try:
                 regexp = re.compile(cert_host[1:])
             except Exception:
@@ -141,17 +159,3 @@ class WatchdogChecks:
             if expiration_date.timestamp() < min_valid_time:
                 return CheckStatus.FAILED
             return CheckStatus.PASSED
-
-    @watchdog_check(['endpoint', 'trusted_endpoint', 'endpoint_speed'])
-    def get_endpoint_checks(self):
-        endpoint_data = self.watchdog.endpoint_status()
-        if not is_status_ok(endpoint_data):
-            return CheckStatus.UNKNOWN
-        endpoint_data = endpoint_data['payload']
-        current_block = init_web3(self.endpoint).eth.blockNumber
-        blocks_gap = current_block - endpoint_data['block_number']
-        endpoint_status = CheckStatus(blocks_gap <= self.requirements['blocks_gap'])
-        trusted_endpoint = CheckStatus(endpoint_data['trusted'])
-        endpoint_speed = CheckStatus(endpoint_data['call_speed'] <=
-                                     self.requirements['call_speed'])
-        return endpoint_status, trusted_endpoint, endpoint_speed
