@@ -13,6 +13,7 @@ CONTAINER_RUNNING_STATUS = 'running'
 def watchdog_check(fields):
     def real_decorator(checker):
         checker.is_check = True
+
         @wraps(checker)
         def wrapper(*args, **kwargs):
             results = checker(*args, **kwargs)
