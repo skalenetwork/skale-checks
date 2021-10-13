@@ -23,12 +23,12 @@ def watchdog_check(fields):
 
 
 class WatchdogChecks:
-    def __init__(self, node_ip, domain_name=None, network='mainnet', endpoint=None):
+    def __init__(self, node_ip, domain_name=None, network='mainnet', web3=None):
         self.node_ip = node_ip
         self.watchdog = Watchdog(node_ip)
         self.domain_name = domain_name
         self.requirements = get_requirements(network)
-        self.eth_endpoint = endpoint
+        self.web3 = web3
 
     def get(self, *checks):
         check_results = {}
@@ -59,8 +59,8 @@ class WatchdogChecks:
         if not is_status_ok(endpoint_data):
             return CheckStatus.UNKNOWN
         endpoint_data = endpoint_data['payload']
-        if self.eth_endpoint:
-            current_block = init_web3(self.eth_endpoint).eth.blockNumber
+        if self.web3:
+            current_block = init_web3(self.web3).eth.blockNumber
             blocks_gap = current_block - endpoint_data['block_number']
             endpoint_status = CheckStatus(blocks_gap <= self.requirements['blocks_gap'])
         else:
