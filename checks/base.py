@@ -1,10 +1,10 @@
 import inspect
+from enum import Enum
 from functools import wraps, partial
-
 from checks.utils import get_requirements
 
 
-def check(fields):
+def check(result_headers):
     def real_decorator(checker):
         checker.is_check = True
 
@@ -13,9 +13,19 @@ def check(fields):
             results = checker(*args, **kwargs)
             if not isinstance(results, tuple):
                 results = [results]
-            return dict(zip(fields, results))
+            wrapped_results = [
+                CheckStatus.UNKNOWN if result is None else CheckStatus(result)
+                for result in results
+            ]
+            return dict(zip(result_headers, wrapped_results))
         return wrapper
     return real_decorator
+
+
+class CheckStatus(Enum):
+    FAILED = 0
+    PASSED = 1
+    UNKNOWN = 2
 
 
 class BaseChecks:

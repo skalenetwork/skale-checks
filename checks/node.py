@@ -4,8 +4,9 @@ from skale.contracts.manager.nodes import NodeStatus
 from skale.utils.helper import ip_from_bytes
 from skale.utils.web3_utils import public_key_to_address
 
+from checks.base import check
 from checks.utils import CheckStatus
-from checks.watchdog import WatchdogChecks, watchdog_check
+from checks.watchdog import WatchdogChecks
 
 
 class NodeChecks(WatchdogChecks):
@@ -20,18 +21,18 @@ class NodeChecks(WatchdogChecks):
         super().__init__(self.node['ip'], domain_name=self.node['domain_name'],
                          network=network, web3=self.skale.web3)
 
-    @watchdog_check(['status'])
+    @check(['status'])
     def status(self):
         return CheckStatus(self.node['status'] == NodeStatus.ACTIVE.name)
 
-    @watchdog_check(['balance'])
+    @check(['balance'])
     def balance(self):
         address = public_key_to_address(self.node['publicKey'])
         node_balance = self.skale.web3.eth.getBalance(address)
         required_node_balance = to_wei(self.requirements['single_node_balance'], 'ether')
         return CheckStatus(required_node_balance <= node_balance)
 
-    @watchdog_check(['validator'])
+    @check(['validator'])
     def validator_balance(self):
         validator_node_ids = self.skale.nodes.get_validator_node_indices(self.node['validator_id'])
         active_ids = self.skale.nodes.get_active_node_ids()
@@ -43,7 +44,7 @@ class NodeChecks(WatchdogChecks):
         validator_balance = self.skale.wallets.get_validator_balance(self.node['validator_id'])
         return CheckStatus(validator_balance >= required_validator_balance)
 
-    @watchdog_check(['logs'])
+    @check(['logs'])
     def logs(self):
         try:
             if not self.es_endpoint or not self.es_login or not self.es_password:
