@@ -4,8 +4,7 @@ from skale.contracts.manager.nodes import NodeStatus
 from skale.utils.helper import ip_from_bytes
 from skale.utils.web3_utils import public_key_to_address
 
-from checks.base import check
-from checks.utils import CheckStatus
+from checks.base import check, OptionalBool
 from checks.watchdog import WatchdogChecks
 
 
@@ -22,18 +21,18 @@ class NodeChecks(WatchdogChecks):
                          network=network, web3=self.skale.web3)
 
     @check(['status'])
-    def status(self):
-        return CheckStatus(self.node['status'] == NodeStatus.ACTIVE.name)
+    def status(self) -> bool:
+        return self.node['status'] == NodeStatus.ACTIVE.name
 
     @check(['balance'])
-    def balance(self):
+    def balance(self) -> bool:
         address = public_key_to_address(self.node['publicKey'])
         node_balance = self.skale.web3.eth.getBalance(address)
         required_node_balance = to_wei(self.requirements['single_node_balance'], 'ether')
-        return CheckStatus(required_node_balance <= node_balance)
+        return required_node_balance <= node_balance
 
     @check(['validator'])
-    def validator_balance(self):
+    def validator_balance(self) -> bool:
         validator_node_ids = self.skale.nodes.get_validator_node_indices(self.node['validator_id'])
         active_ids = self.skale.nodes.get_active_node_ids()
         validator_nodes_count = len(list(set(validator_node_ids) & set(active_ids)))
@@ -42,13 +41,13 @@ class NodeChecks(WatchdogChecks):
         required_validator_balance = validator_nodes_count * validator_node_balance_wei
 
         validator_balance = self.skale.wallets.get_validator_balance(self.node['validator_id'])
-        return CheckStatus(validator_balance >= required_validator_balance)
+        return validator_balance >= required_validator_balance
 
     @check(['logs'])
-    def logs(self):
+    def logs(self) -> OptionalBool:
         try:
             if not self.es_endpoint or not self.es_login or not self.es_password:
-                return CheckStatus.UNKNOWN
+                return None
             es = Elasticsearch(self.es_endpoint,
                                http_auth=(self.es_login, self.es_password))
             query = {
@@ -64,7 +63,7 @@ class NodeChecks(WatchdogChecks):
             }
             result = es.search(body=query)
             if result['hits']['total']['value'] == 0:
-                return CheckStatus.FAILED
+                return False
             time_query = {
                 "size": 1,
                 "script_fields": {
@@ -77,6 +76,6 @@ class NodeChecks(WatchdogChecks):
             current_time = time_response['hits']['hits'][0]['fields']['now'][0]
             last_timestamp = result['hits']['hits'][0]['sort'][0]
             delta_time = (current_time - last_timestamp) / 1000
-            return CheckStatus(delta_time < self.requirements['logs_gap'])
+            return delta_time < self.requirements['logs_gap']
         except (ConnectionError, ElasticsearchException):
-            return CheckStatus.FAILED
+            return False

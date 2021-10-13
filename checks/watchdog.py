@@ -4,8 +4,7 @@ import datetime as dt
 
 from adapters.client import Watchdog
 from adapters.connector import is_status_ok
-from checks.base import check, BaseChecks
-from checks.utils import CheckStatus
+from checks.base import check, BaseChecks, OptionalBool, OptionalBoolTuple
 
 CONTAINER_RUNNING_STATUS = 'running'
 
@@ -19,7 +18,7 @@ class WatchdogChecks(BaseChecks):
         super().__init__(network)
 
     @check(['core'])
-    def core(self):
+    def core(self) -> OptionalBool:
         components = self.watchdog.get_skale_containers()
         if not is_status_ok(components):
             return None
@@ -32,10 +31,10 @@ class WatchdogChecks(BaseChecks):
         return container_statuses
 
     @check(['endpoint', 'trusted_endpoint', 'endpoint_speed'])
-    def endpoint(self):
+    def endpoint(self) -> OptionalBoolTuple:
         endpoint_data = self.watchdog.endpoint_status()
         if not is_status_ok(endpoint_data):
-            return None
+            return None, None, None
         endpoint_data = endpoint_data['payload']
         if self.web3:
             current_block = self.web3.eth.blockNumber
@@ -48,7 +47,7 @@ class WatchdogChecks(BaseChecks):
         return endpoint_status, trusted_endpoint, endpoint_speed
 
     @check(['versions'])
-    def versions(self):
+    def versions(self) -> OptionalBool:
         components = self.watchdog.get_component_versions()
         if not is_status_ok(components):
             return None
@@ -62,7 +61,7 @@ class WatchdogChecks(BaseChecks):
         return component_versions
 
     @check(['sgx', 'sgx_version'])
-    def sgx(self):
+    def sgx(self) -> OptionalBoolTuple:
         sgx_status = self.watchdog.sgx_status()
         if not is_status_ok(sgx_status):
             return None, None
@@ -72,7 +71,7 @@ class WatchdogChecks(BaseChecks):
         return is_sgx_working, sgx_version_check
 
     @check(['hardware'])
-    def hardware(self):
+    def hardware(self) -> OptionalBool:
         hardware_status = self.watchdog.hardware_status()
         if not is_status_ok(hardware_status):
             return None
@@ -84,21 +83,21 @@ class WatchdogChecks(BaseChecks):
         return hardware_check
 
     @check(['btrfs'])
-    def btrfs(self):
+    def btrfs(self) -> OptionalBool:
         btrfs_status = self.watchdog.btrfs_status()
         if not is_status_ok(btrfs_status):
             return None
         return btrfs_status['payload']['kernel_module']
 
     @check(['public_ip'])
-    def public_ip(self):
+    def public_ip(self) -> OptionalBool:
         public_ip_status = self.watchdog.public_ip()
         if not is_status_ok(public_ip_status):
             return None
         return public_ip_status['payload']['public_ip'] == self.node_ip
 
     @check(['validator_nodes'])
-    def validator_nodes(self):
+    def validator_nodes(self) -> OptionalBool:
         validator_nodes_data = self.watchdog.validator_nodes()
         if not is_status_ok(validator_nodes_data):
             return None
@@ -111,7 +110,7 @@ class WatchdogChecks(BaseChecks):
         return True
 
     @check(['ssl'])
-    def ssl(self):
+    def ssl(self) -> OptionalBool:
         if not self.domain_name:
             return None
         ssl_data = self.watchdog.ssl_status()
