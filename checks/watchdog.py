@@ -1,8 +1,7 @@
 import re
 from datetime import datetime
 import datetime as dt
-
-from skale.utils.web3_utils import init_web3
+from functools import wraps
 
 from adapters.client import Watchdog
 from adapters.connector import is_status_ok
@@ -13,6 +12,8 @@ CONTAINER_RUNNING_STATUS = 'running'
 
 def watchdog_check(fields):
     def real_decorator(checker):
+        checker.is_check = True
+        @wraps(checker)
         def wrapper(*args, **kwargs):
             results = checker(*args, **kwargs)
             if not isinstance(results, tuple):
@@ -34,8 +35,12 @@ class WatchdogChecks:
         check_results = {}
         for check in checks:
             try:
-                res = self.__getattribute__(check)()
-                check_results.update(res)
+                item = self.__getattribute__(check)
+                if hasattr(item, 'is_check'):
+                    result = item()
+                    check_results.update(result)
+                else:
+                    raise AttributeError
             except AttributeError:
                 raise AttributeError(f'Check {check} is not found in WatchdogChecks')
         return check_results
@@ -60,7 +65,7 @@ class WatchdogChecks:
             return CheckStatus.UNKNOWN
         endpoint_data = endpoint_data['payload']
         if self.web3:
-            current_block = init_web3(self.web3).eth.blockNumber
+            current_block = self.web3.eth.blockNumber
             blocks_gap = current_block - endpoint_data['block_number']
             endpoint_status = CheckStatus(blocks_gap <= self.requirements['blocks_gap'])
         else:
