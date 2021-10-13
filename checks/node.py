@@ -47,7 +47,7 @@ class NodeChecks(WatchdogChecks):
     def logs(self):
         try:
             if not self.es_endpoint or not self.es_login or not self.es_password:
-                return None
+                return CheckStatus.UNKNOWN
             es = Elasticsearch(self.es_endpoint,
                                http_auth=(self.es_login, self.es_password))
             query = {
@@ -63,7 +63,7 @@ class NodeChecks(WatchdogChecks):
             }
             result = es.search(body=query)
             if result['hits']['total']['value'] == 0:
-                return False
+                return CheckStatus.FAILED
             time_query = {
                 "size": 1,
                 "script_fields": {
@@ -76,6 +76,6 @@ class NodeChecks(WatchdogChecks):
             current_time = time_response['hits']['hits'][0]['fields']['now'][0]
             last_timestamp = result['hits']['hits'][0]['sort'][0]
             delta_time = (current_time - last_timestamp) / 1000
-            return delta_time < self.requirements['logs_gap']
+            return CheckStatus(delta_time < self.requirements['logs_gap'])
         except (ConnectionError, ElasticsearchException):
-            return None
+            return CheckStatus.FAILED
