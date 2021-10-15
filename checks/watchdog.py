@@ -11,7 +11,7 @@ CONTAINER_RUNNING_STATUS = 'running'
 
 
 class WatchdogChecks(BaseChecks):
-    def __init__(self, node_ip, domain_name=None, network='mainnet', web3=None):
+    def __init__(self, node_ip, network='mainnet', domain_name=None, web3=None):
         self.node_ip = node_ip
         self.watchdog = Watchdog(node_ip)
         self.domain_name = domain_name

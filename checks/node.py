@@ -4,7 +4,8 @@ from skale.contracts.manager.nodes import NodeStatus
 from skale.utils.helper import ip_from_bytes
 from skale.utils.web3_utils import public_key_to_address
 
-from checks.base import check, OptionalBool
+from checks.base import check
+from checks.types import OptionalBool
 from checks.watchdog import WatchdogChecks
 
 
@@ -17,8 +18,8 @@ class NodeChecks(WatchdogChecks):
         self.es_endpoint = es_endpoint
         self.es_login = es_login
         self.es_password = es_password
-        super().__init__(self.node['ip'], domain_name=self.node['domain_name'],
-                         network=network, web3=self.skale.web3)
+        super().__init__(self.node['ip'], network=network, domain_name=self.node['domain_name'],
+                         web3=self.skale.web3)
 
     @check(['status'])
     def status(self) -> bool:
