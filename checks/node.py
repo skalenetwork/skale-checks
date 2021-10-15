@@ -17,6 +17,7 @@
 #   You should have received a copy of the GNU Affero General Public License
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import warnings
 from elasticsearch import Elasticsearch, ElasticsearchException
 from eth_utils import to_wei
 from skale.contracts.manager.nodes import NodeStatus
@@ -27,6 +28,7 @@ from web3 import Web3
 from checks.base import check
 from checks.types import OptionalBool
 from checks.watchdog import WatchdogChecks
+warnings.filterwarnings("ignore")
 
 
 class NodeChecks(WatchdogChecks):
@@ -65,7 +67,7 @@ class NodeChecks(WatchdogChecks):
     @check(['logs'])
     def logs(self) -> OptionalBool:
         try:
-            if not self.es_credentials or None in self.es_credentials:
+            if not self.es_credentials or len(self.es_credentials) != 3:
                 return None
             es = Elasticsearch(self.es_credentials[0],
                                http_auth=self.es_credentials[1:3])
