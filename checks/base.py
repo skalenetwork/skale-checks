@@ -27,6 +27,19 @@ class BaseChecks:
     def __init__(self, network='mainnet'):
         self.requirements = get_requirements(network)
 
+    @classmethod
+    def info(cls):
+        checks_info = {}
+        checks = inspect.getmembers(
+            cls,
+            predicate=lambda m: inspect.isfunction(m) and getattr(m, 'is_check', None)
+        )
+        for method in checks:
+            checks_info.update({
+                method[0]: method[1].headers
+            })
+        return checks_info
+
     def get(self, *checks: str) -> ChecksDict:
         check_results = {}
         if len(checks) == 0:
@@ -46,15 +59,3 @@ class BaseChecks:
                 except (AttributeError, AssertionError):
                     raise AttributeError(f'Check {check} is not found in WatchdogChecks')
         return check_results
-
-    def info(self):
-        checks_info = {}
-        checks = inspect.getmembers(
-            type(self),
-            predicate=lambda m: inspect.isfunction(m) and getattr(m, 'is_check', None)
-        )
-        for method in checks:
-            checks_info.update({
-                method[0]: method[1].headers
-            })
-        return checks_info
