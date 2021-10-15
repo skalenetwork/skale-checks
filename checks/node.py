@@ -32,14 +32,14 @@ warnings.filterwarnings("ignore")
 
 
 class NodeChecks(WatchdogChecks):
-    def __init__(self, skale, node_id, network='mainnet', es_credentials=None):
+    def __init__(self, skale, node_id, network='mainnet', es_credentials=None, timeout=None):
         self.skale = skale
         self.node = self.skale.nodes.get(node_id)
         self.node['id'] = node_id
         self.node['ip'] = ip_from_bytes(self.node['ip'])
         self.es_credentials = es_credentials
         super().__init__(self.node['ip'], network=network, domain_name=self.node['domain_name'],
-                         web3=self.skale.web3)
+                         web3=self.skale.web3, timeout=timeout)
 
     @check(['status'])
     def status(self) -> bool:
