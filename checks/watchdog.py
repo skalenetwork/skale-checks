@@ -1,8 +1,27 @@
+#   -*- coding: utf-8 -*-
+#
+#   This file is part of skale-checks
+#
+#   Copyright (C) 2021-Present SKALE Labs
+#
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU Affero General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU Affero General Public License for more details.
+#
+#   You should have received a copy of the GNU Affero General Public License
+#   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import re
 from datetime import datetime
 import datetime as dt
 
-from adapters.clients import Watchdog
+from adapters.watchdog import Watchdog
 from checks.base import check, BaseChecks
 from checks.types import OptionalBool, OptionalBoolTuple
 
@@ -59,7 +78,6 @@ class WatchdogChecks(BaseChecks):
         for name in components:
             if name in self.requirements['versions'].keys():
                 if components[name] not in self.requirements['versions'][name]:
-                    print(name)
                     component_versions = False
         return component_versions
 
