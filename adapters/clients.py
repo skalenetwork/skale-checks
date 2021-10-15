@@ -1,6 +1,6 @@
 import re
 
-from adapters.connectors import (Connector, is_status_ok, construct_ok_response,
+from adapters.connectors import (Connector, construct_ok_response,
                                  construct_err_response, Response)
 
 WATCHDOG_TIMEOUT_DEFAULT = 10
@@ -58,10 +58,10 @@ class Watchdog(WatchdogBase):
         super().__init__(node_ip, timeout)
 
     def get_skale_containers(self) -> Response:
-        containers = super().core_status()
-        if not is_status_ok(containers):
-            return construct_err_response(containers.payload)
-        containers = containers.payload
+        containers_response = super().core_status()
+        if not containers_response.is_status_ok():
+            return construct_err_response(containers_response.payload)
+        containers = containers_response.payload
         data = {
             container['name']: {
                 'status': container['state']['Status'],
@@ -72,28 +72,28 @@ class Watchdog(WatchdogBase):
         return construct_ok_response(data)
 
     def get_component_versions(self):
-        data = self.get_skale_containers()
-        if not is_status_ok(data):
-            return construct_err_response(data.payload)
-        schain_data = super().schain_containers_versions_status()
-        if not is_status_ok(schain_data):
-            return construct_err_response(schain_data.payload)
-        meta_data = super().meta_status()
-        if not is_status_ok(meta_data):
-            return construct_err_response(meta_data.payload)
+        containers_response = self.get_skale_containers()
+        if not containers_response.is_status_ok():
+            return construct_err_response(containers_response.payload)
+        schain_versions_response = super().schain_containers_versions_status()
+        if not schain_versions_response.is_status_ok():
+            return construct_err_response(schain_versions_response.payload)
+        meta_response = super().meta_status()
+        if not meta_response.is_status_ok():
+            return construct_err_response(meta_response.payload)
         versions = {
             name: get_container_version(container['version'])
-            for name, container in data.payload.items()
+            for name, container in containers_response.payload.items()
         }
-        versions.update(schain_data.payload)
-        versions.update(meta_data.payload)
+        versions.update(schain_versions_response.payload)
+        versions.update(meta_response.payload)
         return construct_ok_response(versions)
 
     def get_schain_status(self, schain_name):
-        schains_data = super().schains_status()
-        if not is_status_ok(schains_data):
-            return construct_err_response(schains_data.payload)
-        for schain in schains_data.payload:
+        schains_response = super().schains_status()
+        if not schains_response.is_status_ok():
+            return construct_err_response(schains_response.payload)
+        for schain in schains_response.payload:
             if schain['name'] == schain_name:
                 return construct_ok_response(schain)
         return construct_err_response(f'sChain {schain_name} not found')

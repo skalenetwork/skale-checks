@@ -3,7 +3,6 @@ from datetime import datetime
 import datetime as dt
 
 from adapters.clients import Watchdog
-from adapters.connectors import is_status_ok
 from checks.base import check, BaseChecks
 from checks.types import OptionalBool, OptionalBoolTuple
 
@@ -24,9 +23,9 @@ class WatchdogChecks(BaseChecks):
     @check(['core'])
     def core(self) -> OptionalBool:
         components = self.watchdog.get_skale_containers()
-        if not is_status_ok(components):
+        if not components.is_status_ok():
             return None
-        components = components['payload']
+        components = components.payload
         container_statuses = True
         for name in components:
             if name in self.requirements['versions'].keys():
@@ -36,10 +35,10 @@ class WatchdogChecks(BaseChecks):
 
     @check(['endpoint', 'trusted_endpoint', 'endpoint_speed'])
     def endpoint(self) -> OptionalBoolTuple:
-        endpoint_data = self.watchdog.endpoint_status()
-        if not is_status_ok(endpoint_data):
+        endpoint_response = self.watchdog.endpoint_status()
+        if not endpoint_response.is_status_ok():
             return None, None, None
-        endpoint_data = endpoint_data['payload']
+        endpoint_data = endpoint_response.payload
         if self.web3:
             current_block = self.web3.eth.blockNumber
             blocks_gap = current_block - endpoint_data['block_number']
@@ -52,10 +51,10 @@ class WatchdogChecks(BaseChecks):
 
     @check(['versions'])
     def versions(self) -> OptionalBool:
-        components = self.watchdog.get_component_versions()
-        if not is_status_ok(components):
+        components_response = self.watchdog.get_component_versions()
+        if not components_response.is_status_ok():
             return None
-        components = components['payload']
+        components = components_response.payload
         component_versions = True
         for name in components:
             if name in self.requirements['versions'].keys():
@@ -66,21 +65,21 @@ class WatchdogChecks(BaseChecks):
 
     @check(['sgx', 'sgx_version'])
     def sgx(self) -> OptionalBoolTuple:
-        sgx_status = self.watchdog.sgx_status()
-        if not is_status_ok(sgx_status):
+        sgx_response = self.watchdog.sgx_status()
+        if not sgx_response.is_status_ok():
             return None, None
-        data = sgx_status['payload']
-        is_sgx_working = data['status'] == 0
-        sgx_version_check = data['sgx_wallet_version'] in self.requirements['versions']['sgx']
+        sgx_data = sgx_response.payload
+        is_sgx_working = sgx_data['status'] == 0
+        sgx_version_check = sgx_data['sgx_wallet_version'] in self.requirements['versions']['sgx']
         return is_sgx_working, sgx_version_check
 
     @check(['hardware'])
     def hardware(self) -> OptionalBool:
-        hardware_status = self.watchdog.hardware_status()
-        if not is_status_ok(hardware_status):
+        hardware_response = self.watchdog.hardware_status()
+        if not hardware_response.is_status_ok():
             return None
+        hardware_data = hardware_response.payload
         hardware_check = True
-        hardware_data = hardware_status['payload']
         for key in self.requirements['hardware'].keys():
             if hardware_data[key] < self.requirements['hardware'][key]:
                 hardware_check = False
@@ -88,24 +87,24 @@ class WatchdogChecks(BaseChecks):
 
     @check(['btrfs'])
     def btrfs(self) -> OptionalBool:
-        btrfs_status = self.watchdog.btrfs_status()
-        if not is_status_ok(btrfs_status):
+        btrfs_response = self.watchdog.btrfs_status()
+        if not btrfs_response.is_status_ok():
             return None
-        return btrfs_status['payload']['kernel_module']
+        return btrfs_response.payload['kernel_module']
 
     @check(['public_ip'])
     def public_ip(self) -> OptionalBool:
-        public_ip_status = self.watchdog.public_ip()
-        if not is_status_ok(public_ip_status):
+        public_ip_response = self.watchdog.public_ip()
+        if not public_ip_response.is_status_ok():
             return None
-        return public_ip_status['payload']['public_ip'] == self.node_ip
+        return public_ip_response.payload['public_ip'] == self.node_ip
 
     @check(['validator_nodes'])
     def validator_nodes(self) -> OptionalBool:
-        validator_nodes_data = self.watchdog.validator_nodes()
-        if not is_status_ok(validator_nodes_data):
+        validator_nodes_response = self.watchdog.validator_nodes()
+        if not validator_nodes_response.is_status_ok():
             return None
-        validator_nodes = validator_nodes_data['payload']
+        validator_nodes = validator_nodes_response.payload
         if len(validator_nodes) == 0:
             return True
         for node in validator_nodes:
@@ -117,10 +116,10 @@ class WatchdogChecks(BaseChecks):
     def ssl(self) -> OptionalBool:
         if not self.domain_name:
             return None
-        ssl_data = self.watchdog.ssl_status()
-        if not is_status_ok(ssl_data):
+        ssl_response = self.watchdog.ssl_status()
+        if not ssl_response.is_status_ok():
             return None
-        ssl_data = ssl_data['payload']
+        ssl_data = ssl_response.payload
         if ssl_data.get('is_empty') is True:
             return False
         else:
