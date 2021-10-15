@@ -18,8 +18,8 @@
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import re
-from adapters.connectors import (Connector, construct_ok_response,
-                                 construct_err_response, Response)
+from skale_checks.adapters.connectors import (Connector, construct_ok_response,
+                                              construct_err_response, Response)
 
 WATCHDOG_TIMEOUT_DEFAULT = 10
 WATCHDOG_PORT = 3009

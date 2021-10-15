@@ -18,7 +18,7 @@
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import yaml
-from checks import REQUIREMENTS_FILE
+from skale_checks.checks import REQUIREMENTS_FILE
 
 
 def get_requirements(network='mainnet'):

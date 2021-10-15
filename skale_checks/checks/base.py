@@ -20,8 +20,8 @@
 import inspect
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import wraps, partial
-from checks.types import ChecksDict, CheckStatus, Func, CheckRunners
-from checks.utils import get_requirements
+from skale_checks.checks.types import ChecksDict, CheckStatus, Func, CheckRunners
+from skale_checks.checks.utils import get_requirements
 
 
 def check(result_headers) -> Func:

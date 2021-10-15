@@ -25,9 +25,9 @@ from skale.utils.helper import ip_from_bytes
 from skale.utils.web3_utils import public_key_to_address
 from web3 import Web3
 
-from checks.base import check
-from checks.types import OptionalBool
-from checks.watchdog import WatchdogChecks
+from skale_checks.checks.base import check
+from skale_checks.checks.types import OptionalBool
+from skale_checks.checks.watchdog import WatchdogChecks
 warnings.filterwarnings("ignore")
 
 

@@ -21,9 +21,9 @@ import re
 from datetime import datetime
 import datetime as dt
 
-from adapters.watchdog import Watchdog
-from checks.base import check, BaseChecks
-from checks.types import OptionalBool, OptionalBoolTuple
+from skale_checks.adapters.watchdog import Watchdog
+from skale_checks.checks.base import check, BaseChecks
+from skale_checks.checks.types import OptionalBool, OptionalBoolTuple
 
 CONTAINER_RUNNING_STATUS = 'running'
 
