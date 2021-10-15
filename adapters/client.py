@@ -1,6 +1,7 @@
 import re
 
-from adapters.connector import Connector, is_status_ok, construct_ok_response, construct_err_response
+from adapters.connector import (Connector, is_status_ok, construct_ok_response,
+                                construct_err_response)
 
 WATCHDOG_TIMEOUT_DEFAULT = 10
 WATCHDOG_PORT = 3009
