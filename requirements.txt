@@ -1,2 +1,0 @@
-skale.py==5.1dev5
-elasticsearch==7.12.0
