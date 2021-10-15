@@ -2,8 +2,8 @@ import re
 from datetime import datetime
 import datetime as dt
 
-from adapters.client import Watchdog
-from adapters.connector import is_status_ok
+from adapters.clients import Watchdog
+from adapters.connectors import is_status_ok
 from checks.base import check, BaseChecks
 from checks.types import OptionalBool, OptionalBoolTuple
 
@@ -11,9 +11,12 @@ CONTAINER_RUNNING_STATUS = 'running'
 
 
 class WatchdogChecks(BaseChecks):
-    def __init__(self, node_ip, network='mainnet', domain_name=None, web3=None):
+    def __init__(self, node_ip, network='mainnet', domain_name=None, web3=None, timeout=None):
         self.node_ip = node_ip
-        self.watchdog = Watchdog(node_ip)
+        if timeout:
+            self.watchdog = Watchdog(node_ip, timeout=timeout)
+        else:
+            self.watchdog = Watchdog(node_ip)
         self.domain_name = domain_name
         self.web3 = web3
         super().__init__(network)

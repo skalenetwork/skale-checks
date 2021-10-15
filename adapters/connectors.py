@@ -1,8 +1,18 @@
+from dataclasses import dataclass
+from typing import NamedTuple
+
 import requests
 
 DEFAULT_TIMEOUT = 10
-ERROR_STATUS = 'error'
-OK_STATUS = 'ok'
+
+
+@dataclass
+class Response():
+    status: str
+    payload: dict
+
+    ERROR_STATUS = 'error'
+    OK_STATUS = 'ok'
 
 
 class Connector:
@@ -10,7 +20,7 @@ class Connector:
         self.ip = ip
         self.timeout = timeout
 
-    def send_request(self, path):
+    def send_request(self, path) -> Response:
         try:
             url = f'{self.ip}{path}'
             response = requests.get(url=url, timeout=self.timeout)
@@ -23,17 +33,17 @@ class Connector:
             return construct_err_response(msg=str(msg))
 
 
-def construct_ok_response(data=None):
+def construct_ok_response(data=None) -> Response:
     if data is None:
         data = {}
-    return {'status': 'ok', 'payload': data}
+    return Response(Response.OK_STATUS, data)
 
 
-def construct_err_response(msg=None):
+def construct_err_response(msg=None) -> Response:
     if msg is None:
         msg = {}
-    return {'status': 'error', 'payload': msg}
+    return Response(Response.ERROR_STATUS, msg)
 
 
-def is_status_ok(data):
-    return data['status'] == OK_STATUS
+def is_status_ok(data) -> bool:
+    return data.status == Response.OK_STATUS
