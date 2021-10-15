@@ -4,7 +4,8 @@ import datetime as dt
 
 from adapters.client import Watchdog
 from adapters.connector import is_status_ok
-from checks.base import check, BaseChecks, OptionalBool, OptionalBoolTuple
+from checks.base import check, BaseChecks
+from checks.types import OptionalBool, OptionalBoolTuple
 
 CONTAINER_RUNNING_STATUS = 'running'
 

@@ -1,12 +1,5 @@
 import yaml
-from enum import Enum
 from checks import REQUIREMENTS_FILE
-
-
-class CheckStatus(Enum):
-    FAILED = 0
-    PASSED = 1
-    UNKNOWN = 2
 
 
 def get_requirements(network='mainnet'):
