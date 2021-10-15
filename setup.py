@@ -5,9 +5,19 @@ from setuptools import (
     setup,
 )
 
+extras_require = {
+    'linter': [
+        "flake8==3.7.9"
+    ]
+}
+
+extras_require['dev'] = (
+    extras_require['linter']
+)
+
 setup(
     name='skale-checks',
-    version='1.0.0',
+    version='1.0',
     description='Checks for SKALE infrastructure',
     long_description_markdown_filename='README.md',
     author='SKALE Labs',
@@ -19,7 +29,7 @@ setup(
     ],
 
     python_requires='>=3.7,<4',
-
+    extras_require=extras_require,
     keywords=['skale', 'checks'],
     packages=find_packages(),
     classifiers=[
