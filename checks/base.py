@@ -18,8 +18,9 @@
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import inspect
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import wraps, partial
-from checks.types import ChecksDict, CheckStatus, Func
+from checks.types import ChecksDict, CheckStatus, Func, CheckRunners
 from checks.utils import get_requirements
 
 
@@ -61,20 +62,35 @@ class BaseChecks:
 
     def get(self, *checks: str) -> ChecksDict:
         check_results = {}
+        check_runners = self.__get_check_runners(*checks)
+
+        with ThreadPoolExecutor(max_workers=len(check_runners)) as executor:
+            futures = [
+                executor.submit(runner)
+                for runner in check_runners
+            ]
+            for future in as_completed(futures):
+                result = future.result()
+                check_results.update(result)
+
+        return check_results
+
+    def __get_check_runners(self, *checks: str) -> CheckRunners:
+        check_runners = []
+
         if len(checks) == 0:
             methods = inspect.getmembers(
                 type(self),
                 predicate=lambda m: inspect.isfunction(m) and getattr(m, 'is_check', None)
             )
             for method in methods:
-                check_results.update(partial(method[1], self)())
+                check_runners.append(partial(method[1], self))
         else:
-            for check in checks:
+            for check_name in checks:
                 try:
-                    item = self.__getattribute__(check)
-                    assert hasattr(item, 'is_check')
-                    result = item()
-                    check_results.update(result)
+                    method = self.__getattribute__(check_name)
+                    assert hasattr(method, 'is_check')
+                    check_runners.append(method)
                 except (AttributeError, AssertionError):
-                    raise AttributeError(f'Check {check} is not found in WatchdogChecks')
-        return check_results
+                    raise AttributeError(f'Check {check_name} is not found in WatchdogChecks')
+        return check_runners
