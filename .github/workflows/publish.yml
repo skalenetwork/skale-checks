@@ -15,8 +15,6 @@ jobs:
       matrix:
         python-version: [3.7]
     env:
-      ETH_PRIVATE_KEY: ${{ secrets.ETH_PRIVATE_KEY }}
-      ENDPOINT: ${{ secrets.ENDPOINT }}
       PIP_USERNAME: ${{ secrets.PIP_USERNAME }}
       PIP_PASSWORD: ${{ secrets.PIP_PASSWORD }}
     steps:
