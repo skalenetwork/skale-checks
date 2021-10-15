@@ -7,6 +7,7 @@ from checks.utils import get_requirements
 def check(result_headers) -> Func:
     def real_decorator(checker):
         checker.is_check = True
+        checker.headers = result_headers
 
         @wraps(checker)
         def wrapper(*args, **kwargs) -> ChecksDict:
@@ -45,3 +46,15 @@ class BaseChecks:
                 except (AttributeError, AssertionError):
                     raise AttributeError(f'Check {check} is not found in WatchdogChecks')
         return check_results
+
+    def info(self):
+        checks_info = {}
+        checks = inspect.getmembers(
+            type(self),
+            predicate=lambda m: inspect.isfunction(m) and getattr(m, 'is_check', None)
+        )
+        for method in checks:
+            checks_info.update({
+                method[0]: method[1].headers
+            })
+        return checks_info
