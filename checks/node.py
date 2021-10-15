@@ -22,6 +22,7 @@ from eth_utils import to_wei
 from skale.contracts.manager.nodes import NodeStatus
 from skale.utils.helper import ip_from_bytes
 from skale.utils.web3_utils import public_key_to_address
+from web3 import Web3
 
 from checks.base import check
 from checks.types import OptionalBool
@@ -29,14 +30,12 @@ from checks.watchdog import WatchdogChecks
 
 
 class NodeChecks(WatchdogChecks):
-    def __init__(self, skale, node_id, network='mainnet', es_endpoint=None, es_login=None,
-                 es_password=None):
+    def __init__(self, skale, node_id, network='mainnet', es_credentials=None):
         self.skale = skale
         self.node = self.skale.nodes.get(node_id)
+        self.node['id'] = node_id
         self.node['ip'] = ip_from_bytes(self.node['ip'])
-        self.es_endpoint = es_endpoint
-        self.es_login = es_login
-        self.es_password = es_password
+        self.es_credentials = es_credentials
         super().__init__(self.node['ip'], network=network, domain_name=self.node['domain_name'],
                          web3=self.skale.web3)
 
@@ -47,7 +46,7 @@ class NodeChecks(WatchdogChecks):
     @check(['balance'])
     def balance(self) -> bool:
         address = public_key_to_address(self.node['publicKey'])
-        node_balance = self.skale.web3.eth.getBalance(address)
+        node_balance = self.skale.web3.eth.getBalance(Web3.toChecksumAddress(address))
         required_node_balance = to_wei(self.requirements['single_node_balance'], 'ether')
         return required_node_balance <= node_balance
 
@@ -66,10 +65,10 @@ class NodeChecks(WatchdogChecks):
     @check(['logs'])
     def logs(self) -> OptionalBool:
         try:
-            if not self.es_endpoint or not self.es_login or not self.es_password:
+            if not self.es_credentials or None in self.es_credentials:
                 return None
-            es = Elasticsearch(self.es_endpoint,
-                               http_auth=(self.es_login, self.es_password))
+            es = Elasticsearch(self.es_credentials[0],
+                               http_auth=self.es_credentials[1:3])
             query = {
                 'size': 1,
                 'sort': {
