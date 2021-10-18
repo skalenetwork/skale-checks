@@ -16,8 +16,6 @@
 #
 #   You should have received a copy of the GNU Affero General Public License
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from itertools import repeat
-
 import yaml
 from skale_checks.checks import REQUIREMENTS_FILE
 from concurrent.futures import ThreadPoolExecutor
@@ -32,12 +30,8 @@ def get_requirements(network='mainnet'):
             print(exc)
 
 
-def is_node_active(skale, node_id):
-    return skale.nodes.is_node_active(node_id)
-
-
 def get_active_nodes_count(skale, validator_id):
     validator_node_ids = skale.nodes.get_validator_node_indices(validator_id)
     executor = ThreadPoolExecutor(max_workers=len(validator_node_ids))
-    res = executor.map(is_node_active, repeat(skale), validator_node_ids)
+    res = executor.map(skale.nodes.is_node_active, validator_node_ids)
     return sum(res)
