@@ -27,7 +27,7 @@ WATCHDOG_TIMEOUT_DEFAULT = 10
 WATCHDOG_PORT = 3009
 
 
-class WatchdogBase(Connector):
+class WatchdogConnector(Connector):
     def __init__(self, node_ip, timeout=WATCHDOG_TIMEOUT_DEFAULT):
         self.watchdog_url = get_watchdog_url(node_ip)
         self.timeout = timeout
@@ -73,7 +73,7 @@ class WatchdogBase(Connector):
         return super().send_request('/status/check-report')
 
 
-class Watchdog(WatchdogBase):
+class Watchdog(WatchdogConnector):
     def __init__(self, node_ip, timeout=WATCHDOG_TIMEOUT_DEFAULT):
         super().__init__(node_ip, timeout)
 
