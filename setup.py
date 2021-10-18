@@ -32,6 +32,8 @@ setup(
     extras_require=extras_require,
     keywords=['skale', 'checks'],
     packages=find_packages(),
+    package_data={'': ['requirements.yaml']},
+    include_package_data=True,
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
