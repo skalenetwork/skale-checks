@@ -18,7 +18,7 @@
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import re
-from functools import lru_cache
+from functools import lru_cache, partial
 
 from skale_checks.adapters.connectors import (Connector, construct_ok_response,
                                               construct_err_response, Response)
@@ -28,49 +28,35 @@ WATCHDOG_PORT = 3009
 
 
 class WatchdogConnector(Connector):
+    __ROUTES = {
+        'core_status': '/status/core',
+        'sgx_status': '/status/sgx',
+        'hardware_status': '/status/hardware',
+        'endpoint_status': '/status/endpoint',
+        'schain_containers_versions_status': '/status/schain-containers-versions',
+        'meta_status': '/status/meta-info',
+        'btrfs_status': '/status/btrfs',
+        'ssl_status': '/status/ssl',
+        'ima_status': '/status/ima',
+        'public_ip': '/status/public-ip',
+        'validator_nodes': '/status/validator-nodes',
+        'check_report': '/status/check-report',
+        'schains_status': '/status/schains'
+    }
+
     def __init__(self, node_ip, timeout=WATCHDOG_TIMEOUT_DEFAULT):
         self.watchdog_url = get_watchdog_url(node_ip)
         self.timeout = timeout
         super().__init__(self.watchdog_url, self.timeout)
 
-    def core_status(self):
-        return super().send_request('/status/core')
+    def __getattr__(self, attr):
+        return partial(self.__watchdog_call, attr=attr)
 
-    def schains_status(self):
-        return super().send_request('/status/schains')
-
-    def sgx_status(self):
-        return super().send_request('/status/sgx')
-
-    def hardware_status(self):
-        return super().send_request('/status/hardware')
-
-    def endpoint_status(self):
-        return super().send_request('/status/endpoint')
-
-    def schain_containers_versions_status(self):
-        return super().send_request('/status/schain-containers-versions')
-
-    def meta_status(self):
-        return super().send_request('/status/meta-info')
-
-    def btrfs_status(self):
-        return super().send_request('/status/btrfs')
-
-    def ssl_status(self):
-        return super().send_request('/status/ssl')
-
-    def ima_status(self):
-        return super().send_request('/status/ima')
-
-    def public_ip(self):
-        return super().send_request('/status/public-ip')
-
-    def validator_nodes(self):
-        return super().send_request('/status/validator-nodes')
-
-    def check_report(self):
-        return super().send_request('/status/check-report')
+    def __watchdog_call(self, attr):
+        route = self.__ROUTES.get(attr)
+        if not route:
+            raise AttributeError(attr)
+        return super().send_request(route)
 
 
 class Watchdog(WatchdogConnector):
@@ -79,7 +65,7 @@ class Watchdog(WatchdogConnector):
 
     @lru_cache(maxsize=10)
     def get_skale_containers(self) -> Response:
-        containers_response = super().core_status()
+        containers_response = self.core_status()
         if not containers_response.is_status_ok():
             return construct_err_response(containers_response.payload)
         containers = containers_response.payload
@@ -96,10 +82,10 @@ class Watchdog(WatchdogConnector):
         containers_response = self.get_skale_containers()
         if not containers_response.is_status_ok():
             return construct_err_response(containers_response.payload)
-        schain_versions_response = super().schain_containers_versions_status()
+        schain_versions_response = self.schain_containers_versions_status()
         if not schain_versions_response.is_status_ok():
             return construct_err_response(schain_versions_response.payload)
-        meta_response = super().meta_status()
+        meta_response = self.meta_status()
         if not meta_response.is_status_ok():
             return construct_err_response(meta_response.payload)
         versions = {
@@ -111,7 +97,7 @@ class Watchdog(WatchdogConnector):
         return construct_ok_response(versions)
 
     def get_schain_status(self, schain_name):
-        schains_response = super().schains_status()
+        schains_response = self.schains_status()
         if not schains_response.is_status_ok():
             return construct_err_response(schains_response.payload)
         for schain in schains_response.payload:

@@ -18,6 +18,7 @@
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import warnings
+
 from elasticsearch import Elasticsearch, ElasticsearchException
 from eth_utils import to_wei
 from skale.contracts.manager.nodes import NodeStatus
@@ -27,6 +28,7 @@ from web3 import Web3
 
 from skale_checks.checks.base import check
 from skale_checks.checks.types import OptionalBool
+from skale_checks.checks.utils import get_active_nodes_count
 from skale_checks.checks.watchdog import WatchdogChecks
 warnings.filterwarnings("ignore")
 
@@ -54,12 +56,9 @@ class NodeChecks(WatchdogChecks):
 
     @check(['validator'])
     def validator_balance(self) -> bool:
-        validator_node_ids = self.skale.nodes.get_validator_node_indices(self.node['validator_id'])
-        active_ids = self.skale.nodes.get_active_node_ids()
-        validator_nodes_count = len(list(set(validator_node_ids) & set(active_ids)))
-
+        active_nodes_count = get_active_nodes_count(self.skale, self.node['validator_id'])
         validator_node_balance_wei = to_wei(self.requirements['validator_node_balance'], 'ether')
-        required_validator_balance = validator_nodes_count * validator_node_balance_wei
+        required_validator_balance = active_nodes_count * validator_node_balance_wei
 
         validator_balance = self.skale.wallets.get_validator_balance(self.node['validator_id'])
         return validator_balance >= required_validator_balance

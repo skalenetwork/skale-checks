@@ -19,6 +19,8 @@
 
 import yaml
 from skale_checks.checks import REQUIREMENTS_FILE
+from skale.contracts.manager.nodes import NodeStatus
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 def get_requirements(network='mainnet'):
@@ -28,3 +30,21 @@ def get_requirements(network='mainnet'):
             return all_requirements[network]
         except yaml.YAMLError as exc:
             print(exc)
+
+
+def get_active_nodes_count(skale, validator_id):
+    active_nodes_count = 0
+    validator_node_ids = skale.nodes.get_validator_node_indices(validator_id)
+    with ThreadPoolExecutor(max_workers=len(validator_node_ids)) as executor:
+        futures = [
+            executor.submit(
+                skale.nodes.get_node_status,
+                node_id
+            )
+            for node_id in validator_node_ids
+        ]
+        for future in as_completed(futures):
+            raw_status = future.result()
+            if NodeStatus(raw_status) == NodeStatus.ACTIVE:
+                active_nodes_count += 1
+    return active_nodes_count
