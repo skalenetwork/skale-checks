@@ -8,16 +8,19 @@ from setuptools import (
 extras_require = {
     'linter': [
         "flake8==3.7.9"
-    ]
+    ],
+    'dev': [
+        "twine==3.1.1"
+    ],
 }
 
 extras_require['dev'] = (
-    extras_require['linter']
+    extras_require['linter'] + extras_require['dev']
 )
 
 setup(
     name='skale-checks',
-    version='',
+    version='1.0',
     description='Checks for SKALE infrastructure',
     long_description_markdown_filename='README.md',
     author='SKALE Labs',
