@@ -17,7 +17,7 @@ extras_require['dev'] = (
 
 setup(
     name='skale-checks',
-    version='1.0',
+    version='',
     description='Checks for SKALE infrastructure',
     long_description_markdown_filename='README.md',
     author='SKALE Labs',
@@ -32,8 +32,9 @@ setup(
     extras_require=extras_require,
     keywords=['skale', 'checks'],
     packages=find_packages(),
-    package_data={'': ['requirements.yaml']},
-    include_package_data=True,
+    package_data={
+        'skale_checks': ['requirements.yaml']
+    },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
