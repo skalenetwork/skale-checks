@@ -18,6 +18,8 @@
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import re
+from functools import lru_cache
+
 from skale_checks.adapters.connectors import (Connector, construct_ok_response,
                                               construct_err_response, Response)
 
@@ -75,6 +77,7 @@ class Watchdog(WatchdogBase):
     def __init__(self, node_ip, timeout=WATCHDOG_TIMEOUT_DEFAULT):
         super().__init__(node_ip, timeout)
 
+    @lru_cache(maxsize=10)
     def get_skale_containers(self) -> Response:
         containers_response = super().core_status()
         if not containers_response.is_status_ok():
