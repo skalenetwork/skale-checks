@@ -16,7 +16,7 @@ pip install skale-checks
 Get checks for node on the network, including contract checks and watchdog checks.
 
 ```python
-from skale_checks.node import NodeChecks
+from skale_checks.checks.node import NodeChecks
 
 node_checks = NodeChecks(skale, 
                          node_id, 
@@ -37,7 +37,7 @@ results = node_checks.get()
 Get checks from specific watchdog. Collect all checks from remote node instance
 
 ```python
-from skale_checks.watchdog import WatchdogChecks
+from skale_checks.checks.watchdog import WatchdogChecks
 
 wd_checks = WatchdogChecks(ip, 
                            network='testnet', 
