@@ -47,14 +47,14 @@ class NodeChecks(WatchdogChecks):
     def status(self) -> bool:
         return self.node['status'] == NodeStatus.ACTIVE.name
 
-    @check(['balance'])
+    @check(['node_balance'])
     def balance(self) -> bool:
         address = public_key_to_address(self.node['publicKey'])
         node_balance = self.skale.web3.eth.getBalance(Web3.toChecksumAddress(address))
         required_node_balance = to_wei(self.requirements['single_node_balance'], 'ether')
         return required_node_balance <= node_balance
 
-    @check(['validator'])
+    @check(['val_balance'])
     def validator_balance(self) -> bool:
         active_nodes_count = get_active_nodes_count(self.skale, self.node['validator_id'])
         validator_node_balance_wei = to_wei(self.requirements['validator_node_balance'], 'ether')
