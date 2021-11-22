@@ -22,8 +22,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import wraps, partial
 from skale_checks.checks.types import ChecksDict, CheckStatus, Func, CheckRunners
 from skale_checks.checks.utils import get_requirements
-from importlib import reload
-from web3._utils import request
 
 
 def check(result_headers) -> Func:
@@ -33,7 +31,6 @@ def check(result_headers) -> Func:
 
         @wraps(checker)
         def wrapper(*args, **kwargs) -> ChecksDict:
-            reload(request)
             results = checker(*args, **kwargs)
             if not isinstance(results, tuple):
                 results = [results]
