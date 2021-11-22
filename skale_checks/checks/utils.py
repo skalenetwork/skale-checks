@@ -40,13 +40,12 @@ def is_node_active(skale, node_id):
 
 def get_active_nodes_count(skale, validator_id):
     sum = 0
-    executors_list = []
     validator_node_ids = skale.nodes.get_validator_node_indices(validator_id)
     with ThreadPoolExecutor(max_workers=len(validator_node_ids)) as executor:
-        for id in validator_node_ids:
-            executors_list.append(executor.submit(is_node_active,
-                                                  skale,
-                                                  id))
-    for x in executors_list:
-        sum += x.result()
+        executors_list = [
+            executor.submit(is_node_active, skale, id)
+            for id in validator_node_ids
+        ]
+    for executor in executors_list:
+        sum += executor.result()
     return sum
