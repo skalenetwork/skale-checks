@@ -22,7 +22,6 @@ from skale_checks.checks import REQUIREMENTS_FILE
 from concurrent.futures import ThreadPoolExecutor
 from web3._utils import request
 from importlib import reload
-from itertools import repeat
 
 
 def get_requirements(network='mainnet'):
@@ -40,7 +39,14 @@ def is_node_active(skale, node_id):
 
 
 def get_active_nodes_count(skale, validator_id):
+    sum = 0
+    executors_list = []
     validator_node_ids = skale.nodes.get_validator_node_indices(validator_id)
-    executor = ThreadPoolExecutor(max_workers=len(validator_node_ids))
-    res = executor.map(is_node_active, repeat(skale), validator_node_ids)
-    return sum(res)
+    with ThreadPoolExecutor(max_workers=len(validator_node_ids)) as executor:
+        for id in validator_node_ids:
+            executors_list.append(executor.submit(is_node_active,
+                                                  skale,
+                                                  id))
+    for x in executors_list:
+        sum += x.result()
+    return sum
