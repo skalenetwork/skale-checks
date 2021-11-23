@@ -34,12 +34,14 @@ warnings.filterwarnings("ignore")
 
 
 class NodeChecks(WatchdogChecks):
-    def __init__(self, skale, node_id, network='mainnet', es_credentials=None, timeout=None):
+    def __init__(self, skale, node_id, network='mainnet', es_credentials=None, timeout=None,
+                 logs_timeout=None):
         self.skale = skale
         self.node = self.skale.nodes.get(node_id)
         self.node['id'] = node_id
         self.node['ip'] = ip_from_bytes(self.node['ip'])
         self.es_credentials = es_credentials
+        self.logs_timeout = logs_timeout
         super().__init__(self.node['ip'], network=network, domain_name=self.node['domain_name'],
                          web3=self.skale.web3, timeout=timeout)
 
@@ -65,11 +67,19 @@ class NodeChecks(WatchdogChecks):
 
     @check(['logs'])
     def logs(self) -> OptionalBool:
+        es_args = {}
         try:
             if not self.es_credentials or len(self.es_credentials) != 3:
                 return None
+            if self.logs_timeout:
+                es_args = {
+                    'timeout': self.logs_timeout,
+                    'max_retries': 3,
+                    'retry_on_timeout': True
+                }
             es = Elasticsearch(self.es_credentials[0],
-                               http_auth=self.es_credentials[1:3])
+                               http_auth=self.es_credentials[1:3],
+                               **es_args)
             query = {
                 'size': 1,
                 'sort': {
