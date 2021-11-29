@@ -23,6 +23,8 @@ from functools import wraps, partial
 from skale_checks.checks.types import ChecksDict, CheckStatus, Func, CheckRunners
 from skale_checks.checks.utils import get_requirements
 
+MAX_WORKERS = 3
+
 
 def check(result_headers) -> Func:
     def real_decorator(checker):
@@ -64,7 +66,7 @@ class BaseChecks:
         check_results = {}
         check_runners = self.__get_check_runners(*checks)
 
-        with ThreadPoolExecutor(max_workers=len(check_runners)) as executor:
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             futures = [
                 executor.submit(runner)
                 for runner in check_runners
