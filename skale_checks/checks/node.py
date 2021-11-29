@@ -47,7 +47,7 @@ class NodeChecks(WatchdogChecks):
 
     @check(['status'])
     def status(self) -> bool:
-        return self.node['status'] == NodeStatus.ACTIVE.name
+        return self.node['status'] == NodeStatus.ACTIVE.value
 
     @check(['node_balance'])
     def node_balance(self) -> bool:
