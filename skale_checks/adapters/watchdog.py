@@ -92,8 +92,15 @@ class Watchdog(WatchdogConnector):
             name: get_container_version(container['version'])
             for name, container in containers_response.payload.items()
         }
-        versions.update(schain_versions_response.payload)
-        versions.update(meta_response.payload)
+        versions.update({
+            'schain': schain_versions_response.payload['skaled_version'],
+            'ima': schain_versions_response.payload['ima_version']
+        })
+        versions.update({
+            'node-cli': meta_response.payload['version'],
+            'configs': meta_response.payload['config_stream'],
+            'docker-lvmpy': meta_response.payload['docker_lvmpy_stream']
+        })
         return construct_ok_response(versions)
 
     def get_schain_status(self, schain_name):
