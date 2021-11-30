@@ -7,7 +7,7 @@ testnet:
   ssl_gap_weeks: 2
   versions:
     sgx: ['1.77.1']
-    schain: ['3.7.5-beta.6']
+    schain: ['3.7.5-beta.7']
     ima: ['1.0.0-stable.1']
     skale_admin: ['2.0.2']
     skale_api: ['2.0.2']
@@ -17,7 +17,7 @@ testnet:
     skale_nginx: ['1.19.6']
     skale_filebeat: ['7.3.1']
     node-cli: ['2.0.1-beta.3']
-    configs: ['2.0.3-testnet.0']
+    configs: ['2.0.3-testnet.1', '2.0.3-testnet.1-no-debug']
     docker-lvmpy: ['1.0.1-stable.3', '1.0.1-beta.3']
   hardware:
     cpu_total_cores: 8
