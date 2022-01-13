@@ -22,7 +22,6 @@ from skale_checks.checks import DEFAULT_REQUIREMENTS_PATH
 from concurrent.futures import ThreadPoolExecutor
 from web3._utils import request
 from importlib import reload
-from os.path import exists as file_exists
 
 
 def get_requirements(network='mainnet', requirements_path=None):
