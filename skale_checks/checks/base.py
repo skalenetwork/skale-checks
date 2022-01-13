@@ -46,8 +46,8 @@ def check(result_headers) -> Func:
 
 
 class BaseChecks:
-    def __init__(self, network='mainnet'):
-        self.requirements = get_requirements(network)
+    def __init__(self, network='mainnet', requirements_path=None):
+        self.requirements = get_requirements(network, requirements_path)
 
     @classmethod
     def info(cls):

@@ -18,14 +18,16 @@
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import yaml
-from skale_checks.checks import REQUIREMENTS_FILE
+from skale_checks.checks import DEFAULT_REQUIREMENTS_PATH
 from concurrent.futures import ThreadPoolExecutor
 from web3._utils import request
 from importlib import reload
 
 
-def get_requirements(network='mainnet'):
-    with open(REQUIREMENTS_FILE, 'r') as stream:
+def get_requirements(network='mainnet', requirements_path=None):
+    if requirements_path is None:
+        requirements_path = DEFAULT_REQUIREMENTS_PATH
+    with open(requirements_path, 'r') as stream:
         try:
             all_requirements = yaml.safe_load(stream)
             return all_requirements[network]
