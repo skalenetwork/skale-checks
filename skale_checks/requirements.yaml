@@ -4,7 +4,7 @@ testnet:
   single_node_balance: 0.1
   validator_node_balance: 0.1
   call_speed: 5
-  ssl_gap_weeks: 2
+  ssl_gap_days: 2
   versions:
     sgx: ['1.77.1']
     schain: ['3.7.5-beta.8']
@@ -30,7 +30,7 @@ mainnet:
   single_node_balance: 0.8
   validator_node_balance: 0.1
   call_speed: 5
-  ssl_gap_weeks: 2
+  ssl_gap_days: 2
   versions:
     sgx: [ '1.77.1' ]
     schain: ['3.7.5-stable.2']

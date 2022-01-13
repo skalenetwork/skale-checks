@@ -151,7 +151,7 @@ class WatchdogChecks(BaseChecks):
                 return False
             raw_date = ssl_data.get('expiration_date')
             expiration_date = datetime.strptime(raw_date, '%Y-%m-%dT%H:%M:%S')
-            offset = dt.timedelta(weeks=self.requirements['ssl_gap_weeks'])
+            offset = dt.timedelta(days=self.requirements['ssl_gap_days'])
             min_valid_time = (datetime.now() + offset).timestamp()
             if expiration_date.timestamp() < min_valid_time:
                 return False
