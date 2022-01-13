@@ -22,10 +22,11 @@ from skale_checks.checks import REQUIREMENTS_FILE
 from concurrent.futures import ThreadPoolExecutor
 from web3._utils import request
 from importlib import reload
+from os.path import exists as file_exists
 
 
 def get_requirements(network='mainnet', requirements_file_path=None):
-    if requirements_file_path is None:
+    if requirements_file_path is None or not file_exists(requirements_file_path):
         requirements_file_path = REQUIREMENTS_FILE
     with open(requirements_file_path, 'r') as stream:
         try:
