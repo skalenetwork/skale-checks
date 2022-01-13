@@ -30,7 +30,7 @@ CONTAINER_RUNNING_STATUS = 'running'
 
 class WatchdogChecks(BaseChecks):
     def __init__(self, node_ip, network='mainnet', domain_name=None,
-                 web3=None, timeout=None, requirements_file_path=None):
+                 web3=None, timeout=None, requirements_path=None):
         self.node_ip = node_ip
         if timeout:
             self.watchdog = Watchdog(node_ip, timeout=timeout)
@@ -38,7 +38,7 @@ class WatchdogChecks(BaseChecks):
             self.watchdog = Watchdog(node_ip)
         self.domain_name = domain_name
         self.web3 = web3
-        super().__init__(network, requirements_file_path=requirements_file_path)
+        super().__init__(network, requirements_path=requirements_path)
 
     @check(['core'])
     def core(self) -> OptionalBool:
