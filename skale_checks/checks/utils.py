@@ -26,7 +26,7 @@ from os.path import exists as file_exists
 
 
 def get_requirements(network='mainnet', requirements_file_path=None):
-    if requirements_file_path is None or not file_exists(requirements_file_path):
+    if requirements_file_path is None:
         requirements_file_path = REQUIREMENTS_FILE
     with open(requirements_file_path, 'r') as stream:
         try:
