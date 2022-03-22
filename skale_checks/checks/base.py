@@ -62,9 +62,12 @@ class BaseChecks:
             })
         return checks_info
 
-    def get(self, *checks: str) -> ChecksDict:
+    def get(self, *checks: str, exclude=None) -> ChecksDict:
+        if exclude is None:
+            exclude = []
+
         check_results = {}
-        check_runners = self.__get_check_runners(*checks)
+        check_runners = self.__get_check_runners(*checks, exclude=exclude)
 
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             futures = [
@@ -77,18 +80,23 @@ class BaseChecks:
 
         return check_results
 
-    def __get_check_runners(self, *checks: str) -> CheckRunners:
-        check_runners = []
+    def __get_check_runners(self, *checks: str, exclude=None) -> CheckRunners:
+        if exclude is None:
+            exclude = []
 
+        check_runners = []
         if len(checks) == 0:
             methods = inspect.getmembers(
                 type(self),
                 predicate=lambda m: inspect.isfunction(m) and getattr(m, 'is_check', None)
             )
             for method in methods:
-                check_runners.append(partial(method[1], self))
+                if method[0] not in exclude:
+                    check_runners.append(partial(method[1], self))
         else:
             for check_name in checks:
+                if check_name in exclude:
+                    continue
                 try:
                     method = self.__getattribute__(check_name)
                     assert hasattr(method, 'is_check')
