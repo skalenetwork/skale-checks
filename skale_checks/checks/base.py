@@ -32,10 +32,14 @@ def check(result_headers) -> Func:
         checker.headers = result_headers
 
         @wraps(checker)
-        def wrapper(*args, **kwargs) -> ChecksDict:
-            results = checker(*args, **kwargs)
-            if not isinstance(results, tuple):
-                results = [results]
+        def wrapper(*args, retries=1, **kwargs) -> ChecksDict:
+            results = []
+            for _ in range(retries):
+                results = checker(*args, **kwargs)
+                if not isinstance(results, tuple):
+                    results = [results]
+                if None not in results:
+                    break
             wrapped_results = [
                 CheckStatus.UNKNOWN if result is None else CheckStatus(result)
                 for result in results
@@ -62,9 +66,14 @@ class BaseChecks:
             })
         return checks_info
 
-    def get(self, *checks: str) -> ChecksDict:
+    def get(self, *checks: str, exclude=None, retries=1) -> ChecksDict:
+        if exclude is None:
+            exclude = []
+
         check_results = {}
-        check_runners = self.__get_check_runners(*checks)
+        check_runners = self.__get_check_runners(*checks,
+                                                 exclude=exclude,
+                                                 retries=retries)
 
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             futures = [
@@ -77,22 +86,27 @@ class BaseChecks:
 
         return check_results
 
-    def __get_check_runners(self, *checks: str) -> CheckRunners:
-        check_runners = []
+    def __get_check_runners(self, *checks: str, exclude=None, retries=1) -> CheckRunners:
+        if exclude is None:
+            exclude = []
 
+        check_runners = []
         if len(checks) == 0:
             methods = inspect.getmembers(
                 type(self),
                 predicate=lambda m: inspect.isfunction(m) and getattr(m, 'is_check', None)
             )
             for method in methods:
-                check_runners.append(partial(method[1], self))
+                if method[0] not in exclude:
+                    check_runners.append(partial(method[1], self, retries=retries))
         else:
             for check_name in checks:
+                if check_name in exclude:
+                    continue
                 try:
                     method = self.__getattribute__(check_name)
                     assert hasattr(method, 'is_check')
-                    check_runners.append(method)
+                    check_runners.append(partial(method, retries=retries))
                 except (AttributeError, AssertionError):
                     raise AttributeError(f'Check {check_name} is not found in WatchdogChecks')
         return check_runners
