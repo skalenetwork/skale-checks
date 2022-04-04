@@ -30,7 +30,6 @@ setup(
         "skale.py == 5.7dev7",
         "elasticsearch == 7.12.0"
     ],
-
     python_requires='>=3.7,<4',
     extras_require=extras_require,
     keywords=['skale', 'checks'],
