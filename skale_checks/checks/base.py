@@ -20,6 +20,8 @@
 import inspect
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import wraps, partial
+from time import sleep
+
 from skale_checks.checks.types import ChecksDict, CheckStatus, Func, CheckRunners
 from skale_checks.checks.utils import get_requirements
 
@@ -32,7 +34,7 @@ def check(result_headers) -> Func:
         checker.headers = result_headers
 
         @wraps(checker)
-        def wrapper(*args, retries=1, **kwargs) -> ChecksDict:
+        def wrapper(*args, retries=1, delay=0, **kwargs) -> ChecksDict:
             results = []
             for _ in range(retries):
                 results = checker(*args, **kwargs)
@@ -40,6 +42,7 @@ def check(result_headers) -> Func:
                     results = [results]
                 if None not in results:
                     break
+                sleep(delay)
             wrapped_results = [
                 CheckStatus.UNKNOWN if result is None else CheckStatus(result)
                 for result in results
