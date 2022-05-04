@@ -17,11 +17,18 @@
 #   You should have received a copy of the GNU Affero General Public License
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import yaml
-from skale_checks.checks import DEFAULT_REQUIREMENTS_PATH
-from concurrent.futures import ThreadPoolExecutor
-from web3._utils import request
+import socket
 from importlib import reload
+from concurrent.futures import ThreadPoolExecutor
+
+import yaml
+from telnetlib import Telnet
+from web3._utils import request
+
+from skale_checks.checks import DEFAULT_REQUIREMENTS_PATH
+
+
+TELNET_TIMEOUT = 3
 
 
 def get_requirements(network='mainnet', requirements_path=None):
@@ -51,3 +58,18 @@ def get_active_nodes_count(skale, validator_id):
     for executor in executors_list:
         sum += executor.result()
     return sum
+
+
+def is_port_open(ip: str, port: int) -> bool:
+    try:
+        with Telnet(ip, port, timeout=TELNET_TIMEOUT):
+            pass
+    except socket.timeout:
+        return False
+    except ConnectionRefusedError:
+        return True
+    return True
+
+
+def is_port_enabled(skale, node_id):
+    pass
