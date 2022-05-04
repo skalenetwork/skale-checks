@@ -74,7 +74,7 @@ class NodeChecks(WatchdogChecks):
     @check(['internal_ports'])
     def internal_ports(self) -> bool:
         """ Checks that internal ports are not accessible from the host """
-        for offset_group in range(0, MAX_SCHAINS_PER_NODE * PORTS_PER_SCHAIN, PORTS_PER_SCHAIN):
+        for offset_group in range(MAX_SCHAINS_PER_NODE):
             for offset_endpoint in [
                 SkaledPorts.PROPOSAL.value,
                 SkaledPorts.CATCHUP.value,
@@ -83,7 +83,7 @@ class NodeChecks(WatchdogChecks):
             ]:
                 if is_port_open(
                     self.node['ip'],
-                    self.node['port'] + offset_group + offset_endpoint
+                    self.node['port'] + PORTS_PER_SCHAIN * offset_group + offset_endpoint
                 ):
                     return False
         return True
