@@ -69,7 +69,3 @@ def is_port_open(ip: str, port: int) -> bool:
     except ConnectionRefusedError:
         return True
     return True
-
-
-def is_port_enabled(skale, node_id):
-    pass
