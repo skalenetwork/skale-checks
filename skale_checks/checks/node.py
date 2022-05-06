@@ -22,15 +22,21 @@ import warnings
 from elasticsearch import Elasticsearch, ElasticsearchException
 from eth_utils import to_wei
 from skale.contracts.manager.nodes import NodeStatus
+from skale.dataclasses.skaled_ports import SkaledPorts
+from skale.schain_config import PORTS_PER_SCHAIN
 from skale.utils.helper import ip_from_bytes
 from skale.utils.web3_utils import public_key_to_address
 from web3 import Web3
 
 from skale_checks.checks.base import check
 from skale_checks.checks.types import OptionalBool
-from skale_checks.checks.utils import get_active_nodes_count
+from skale_checks.checks.utils import get_active_nodes_count, is_port_open
 from skale_checks.checks.watchdog import WatchdogChecks
+
 warnings.filterwarnings("ignore")
+
+
+MAX_SCHAINS_PER_NODE = 8
 
 
 class NodeChecks(WatchdogChecks):
@@ -64,6 +70,23 @@ class NodeChecks(WatchdogChecks):
 
         validator_balance = self.skale.wallets.get_validator_balance(self.node['validator_id'])
         return validator_balance >= required_validator_balance
+
+    @check(['internal_ports'])
+    def internal_ports(self) -> bool:
+        """ Checks that internal ports are not accessible from the host """
+        for offset_group in range(MAX_SCHAINS_PER_NODE):
+            for offset_endpoint in [
+                SkaledPorts.PROPOSAL.value,
+                SkaledPorts.CATCHUP.value,
+                SkaledPorts.BINARY_CONSENSUS.value,
+                SkaledPorts.ZMQ_BROADCAST.value
+            ]:
+                if is_port_open(
+                    self.node['ip'],
+                    self.node['port'] + PORTS_PER_SCHAIN * offset_group + offset_endpoint
+                ):
+                    return False
+        return True
 
     @check(['logs'])
     def logs(self) -> OptionalBool:
