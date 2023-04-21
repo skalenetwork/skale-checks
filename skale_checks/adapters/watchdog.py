@@ -96,10 +96,14 @@ class Watchdog(WatchdogConnector):
             'schain': schain_versions_response.payload['skaled_version'],
             'ima': schain_versions_response.payload['ima_version']
         })
+        os_id = meta_response.payload.get('os_id', None)
+        os_version = meta_response.payload.get('os_version', None)
         versions.update({
             'node-cli': meta_response.payload['version'],
             'configs': meta_response.payload['config_stream'],
-            'docker-lvmpy': meta_response.payload['docker_lvmpy_stream']
+            'docker-lvmpy': meta_response.payload['docker_lvmpy_stream'],
+            'os_id': os_id,
+            'os_version': os_version
         })
         return construct_ok_response(versions)
 
