@@ -19,6 +19,8 @@ testnet:
     node-cli: ['2.0.1-beta.3']
     configs: ['2.0.3-testnet.2', '2.0.3-testnet.2-no-debug']
     docker-lvmpy: ['1.0.1-stable.3', '1.0.1-beta.3']
+    os_id: ['ubuntu']
+    os_version: ['20.04']
   hardware:
     cpu_total_cores: 8
     memory: 32000000000
