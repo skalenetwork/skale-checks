@@ -26,6 +26,7 @@ from skale_checks.checks.base import check, BaseChecks
 from skale_checks.checks.types import OptionalBool, OptionalBoolTuple
 
 CONTAINER_RUNNING_STATUS = 'running'
+SGX_CONNECTED_STATUS = 'CONNECTED'
 
 
 class WatchdogChecks(BaseChecks):
@@ -88,7 +89,8 @@ class WatchdogChecks(BaseChecks):
         if not sgx_response.is_status_ok():
             return None, None
         sgx_data = sgx_response.payload
-        is_sgx_working = sgx_data['status'] == 0
+        is_sgx_working = (sgx_data['status'] == 0 and
+                          sgx_data['status_name'] == SGX_CONNECTED_STATUS)
         sgx_version_check = sgx_data['sgx_wallet_version'] in self.requirements['versions']['sgx']
         return is_sgx_working, sgx_version_check
 
