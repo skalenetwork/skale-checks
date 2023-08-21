@@ -81,10 +81,15 @@ class NodeChecks(WatchdogChecks):
                 SkaledPorts.BINARY_CONSENSUS.value,
                 SkaledPorts.ZMQ_BROADCAST.value
             ]:
-                if is_port_open(
-                    self.node['ip'],
-                    self.node['port'] + PORTS_PER_SCHAIN * offset_group + offset_endpoint
-                ):
+                port_check_passed = True
+                try:
+                    port_check_passed = not is_port_open(
+                        self.node['ip'],
+                        self.node['port'] + PORTS_PER_SCHAIN * offset_group + offset_endpoint
+                    )
+                except OSError:
+                    port_check_passed = False
+                if not port_check_passed:
                     return False
         return True
 
