@@ -61,7 +61,7 @@ class WatchdogChecks(BaseChecks):
             return None, None, None
         endpoint_data = endpoint_response.payload
         if self.web3:
-            current_block = self.web3.eth.blockNumber
+            current_block = self.web3.eth.block_number
             blocks_gap = current_block - endpoint_data['block_number']
             endpoint_status = blocks_gap <= self.requirements['blocks_gap']
         else:
