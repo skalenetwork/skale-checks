@@ -58,7 +58,7 @@ class NodeChecks(WatchdogChecks):
     @check(['node_balance'])
     def node_balance(self) -> bool:
         address = public_key_to_address(self.node['publicKey'])
-        node_balance = self.skale.web3.eth.getBalance(Web3.toChecksumAddress(address))
+        node_balance = self.skale.web3.eth.get_balance(Web3.to_checksum_address(address))
         required_node_balance = to_wei(self.requirements['single_node_balance'], 'ether')
         return required_node_balance <= node_balance
 
