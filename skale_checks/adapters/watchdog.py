@@ -73,6 +73,7 @@ class Watchdog(WatchdogConnector):
             container['name']: {
                 'status': container['state']['Status'],
                 'exitCode': container['state']['ExitCode'],
+                'finishedAt': container['state']['FinishedAt'],
                 'version': container['image']
             } for container in containers if container['name'].startswith('skale_')
         }
