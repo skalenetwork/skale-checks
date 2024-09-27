@@ -89,8 +89,14 @@ class WatchdogChecks(BaseChecks):
         if not sgx_response.is_status_ok():
             return None, None
         sgx_data = sgx_response.payload
-        is_sgx_working = (sgx_data['status'] == 0 and
-                          sgx_data['status_name'] == SGX_CONNECTED_STATUS)
+        status_zmg = sgx_data.get('status_zmq', None)
+        status_https = sgx_data.get('status_https', None)
+        if status_zmg is None and status_https is None:
+            status_zmg = sgx_data.get('status', None)
+            status_https = sgx_data.get('status_name', None)
+            is_sgx_working = status_zmg == 0 and status_https == SGX_CONNECTED_STATUS
+        else:
+            is_sgx_working = status_zmg is True and status_https is True
         sgx_version_check = sgx_data['sgx_wallet_version'] in self.requirements['versions']['sgx']
         return is_sgx_working, sgx_version_check
 
