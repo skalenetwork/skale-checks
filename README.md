@@ -3,7 +3,7 @@ Python package for node and schain checks
 
 ## Requirements
 
-* Python 3.7+ compatible
+* Python 3.11+ compatible
 
 ## Installation
 
