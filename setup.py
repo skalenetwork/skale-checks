@@ -27,10 +27,10 @@ setup(
     author_email='support@skalelabs.com',
     url='https://github.com/skalenetwork/skale-checks',
     install_requires=[
-        "skale.py==6.2b0",
+        "skale.py==7.0dev0",
         "elasticsearch==7.12.0"
     ],
-    python_requires='>=3.7,<4',
+    python_requires='>=3.11,<4',
     extras_require=extras_require,
     keywords=['skale', 'checks'],
     packages=find_packages(),
@@ -42,6 +42,6 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)',
         'Natural Language :: English',
-        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.11',
     ]
 )
