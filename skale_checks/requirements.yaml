@@ -1,0 +1,54 @@
+testnet:
+  blocks_gap: 40
+  logs_gap: 1800
+  single_node_balance: 0.1
+  validator_node_balance: 0.1
+  call_speed: 5
+  ssl_gap_days: 5
+  versions:
+    sgx: ['1.77.1']
+    schain: ['3.7.5-beta.8']
+    ima: ['1.0.0-stable.1']
+    skale_admin: ['2.0.2']
+    skale_api: ['2.0.2']
+    skale_transaction-manager: ['2.0.2']
+    skale_watchdog: ['2.0.2-stable.0']
+    skale_bounty: ['2.0.2-stable.0']
+    skale_nginx: ['1.19.6']
+    skale_filebeat: ['7.3.1']
+    node-cli: ['2.0.1-beta.3']
+    configs: ['2.0.3-testnet.2', '2.0.3-testnet.2-no-debug']
+    docker-lvmpy: ['1.0.1-stable.3', '1.0.1-beta.3']
+    os_id: ['ubuntu']
+    os_version: ['18.04', '20.04']
+  hardware:
+    cpu_total_cores: 8
+    memory: 32000000000
+    swap: 15000000000
+    attached_storage_size: 200000000
+mainnet:
+  blocks_gap: 40
+  logs_gap: 1800
+  single_node_balance: 0.8
+  validator_node_balance: 0.1
+  call_speed: 5
+  ssl_gap_days: 5
+  versions:
+    sgx: [ '1.77.1' ]
+    schain: ['3.7.5-stable.2']
+    ima: ['1.0.0-stable.1']
+    skale_admin: ['2.0.2']
+    skale_api: ['2.0.2']
+    skale_transaction-manager: ['2.0.2']
+    skale_watchdog: ['2.0.2-stable.0']
+    skale_bounty: ['2.0.2-stable.0']
+    skale_nginx: ['1.19.6']
+    skale_filebeat: ['7.3.1']
+    node-cli: ['2.0.2']
+    configs: ['2.0.3']
+    docker-lvmpy: ['1.0.1-stable.3']
+  hardware:
+    cpu_total_cores: 8
+    memory: 32000000000
+    swap: 0
+    attached_storage_size: 19000000000
