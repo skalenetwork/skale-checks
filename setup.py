@@ -20,7 +20,7 @@ extras_require['dev'] = (
 
 setup(
     name='skale-checks',
-    version='1.0',
+    version='1.1',
     description='Checks for SKALE infrastructure',
     long_description_markdown_filename='README.md',
     author='SKALE Labs',
