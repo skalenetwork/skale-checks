@@ -23,7 +23,7 @@ from elasticsearch import Elasticsearch, ElasticsearchException
 from eth_utils import to_wei
 from skale.contracts.manager.nodes import NodeStatus
 from skale.dataclasses.skaled_ports import SkaledPorts
-from skale.schain_config import PORTS_PER_SCHAIN
+from skale.schain_config.ports_allocation import get_schain_base_port_on_node
 from skale.utils.helper import ip_from_bytes
 from skale.utils.web3_utils import public_key_to_address
 from web3 import Web3
@@ -74,7 +74,12 @@ class NodeChecks(WatchdogChecks):
     @check(['internal_ports'])
     def internal_ports(self) -> bool:
         """ Checks that internal ports are not accessible from the host """
-        for offset_group in range(MAX_SCHAINS_PER_NODE):
+        node_id = self.node['id']
+        active_schains_ids = self.skale.schains_internal.get_active_schain_ids_for_node(node_id)
+        schains = self.skale.schains.get_schains_for_node(node_id)
+        for schain_id in active_schains_ids:
+            schain_name = self.skale.schains.get(schain_id)['name']
+            schain_base_port = get_schain_base_port_on_node(schains, schain_name, self.node['port'])
             for offset_endpoint in [
                 SkaledPorts.PROPOSAL.value,
                 SkaledPorts.CATCHUP.value,
@@ -83,10 +88,8 @@ class NodeChecks(WatchdogChecks):
             ]:
                 port_check_passed = True
                 try:
-                    port_check_passed = not is_port_open(
-                        self.node['ip'],
-                        self.node['port'] + PORTS_PER_SCHAIN * offset_group + offset_endpoint
-                    )
+                    port = schain_base_port + offset_endpoint
+                    port_check_passed = not is_port_open(self.node['ip'], port)
                 except OSError:
                     port_check_passed = False
                 if not port_check_passed:
