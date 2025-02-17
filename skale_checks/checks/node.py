@@ -19,7 +19,6 @@
 
 import warnings
 
-from dataclasses import asdict
 from elasticsearch import Elasticsearch, ElasticsearchException
 from eth_utils import to_wei
 from skale.contracts.manager.nodes import NodeStatus
@@ -79,7 +78,7 @@ class NodeChecks(WatchdogChecks):
         active_schains_ids = self.skale.schains_internal.get_active_schain_ids_for_node(node_id)
         schains = self.skale.schains.get_schains_for_node(node_id)
         for schain_id in active_schains_ids:
-            schain_name = asdict(self.skale.schains.get(schain_id))['name']
+            schain_name = self.skale.schains.get(schain_id).name
             schain_base_port = get_schain_base_port_on_node(schains, schain_name, self.node['port'])
             for offset_endpoint in [
                 SkaledPorts.PROPOSAL.value,
