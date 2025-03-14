@@ -39,6 +39,15 @@ warnings.filterwarnings("ignore")
 MAX_SCHAINS_PER_NODE = 8
 
 
+class SGXPort:
+    HTTPS: int = 1026
+    TLS: int = 1027
+    LOCAL: int = 1028
+    HTTP_ONLY: int = 1029
+    INFO: int = 1030
+    ZMQ: int = 1031
+
+
 class NodeChecks(WatchdogChecks):
     def __init__(self, skale, node_id, network='mainnet', es_credentials=None, timeout=None,
                  logs_timeout=None, requirements_path=None):
@@ -94,6 +103,14 @@ class NodeChecks(WatchdogChecks):
                     port_check_passed = False
                 if not port_check_passed:
                     return False
+        sgx_ports = [element.value for element in SGXPort]
+        for port in sgx_ports:
+            try:
+                port_check_passed = not is_port_open(port)
+            except OSError:
+                port_check_passed = False
+            if not port_check_passed:
+                return False
         return True
 
     @check(['logs'])
