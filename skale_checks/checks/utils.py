@@ -18,12 +18,10 @@
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import socket
-from importlib import reload
 from concurrent.futures import ThreadPoolExecutor
 
 import yaml
 from telnetlib import Telnet
-from web3._utils import request
 
 from skale_checks.checks import DEFAULT_REQUIREMENTS_PATH
 
@@ -31,10 +29,10 @@ from skale_checks.checks import DEFAULT_REQUIREMENTS_PATH
 TELNET_TIMEOUT = 3
 
 
-def get_requirements(network='mainnet', requirements_path=None):
+def get_requirements(network="mainnet", requirements_path=None):
     if requirements_path is None:
         requirements_path = DEFAULT_REQUIREMENTS_PATH
-    with open(requirements_path, 'r') as stream:
+    with open(requirements_path, "r") as stream:
         try:
             all_requirements = yaml.safe_load(stream)
             return all_requirements[network]
@@ -43,7 +41,6 @@ def get_requirements(network='mainnet', requirements_path=None):
 
 
 def is_node_active(skale, node_id):
-    reload(request)
     return skale.nodes.is_node_active(node_id)
 
 
@@ -52,8 +49,7 @@ def get_active_nodes_count(skale, validator_id):
     validator_node_ids = skale.nodes.get_validator_node_indices(validator_id)
     with ThreadPoolExecutor(max_workers=len(validator_node_ids)) as executor:
         executors_list = [
-            executor.submit(is_node_active, skale, id)
-            for id in validator_node_ids
+            executor.submit(is_node_active, skale, id) for id in validator_node_ids
         ]
     for executor in executors_list:
         sum += executor.result()
