@@ -20,6 +20,7 @@
 import warnings
 
 from elasticsearch import Elasticsearch, ElasticsearchException
+from enum import IntEnum
 from eth_utils import to_wei
 from skale.contracts.manager.nodes import NodeStatus
 from skale.dataclasses.skaled_ports import SkaledPorts
@@ -39,13 +40,13 @@ warnings.filterwarnings("ignore")
 MAX_SCHAINS_PER_NODE = 8
 
 
-class SGXPort:
-    HTTPS: int = 1026
-    TLS: int = 1027
-    LOCAL: int = 1028
-    HTTP_ONLY: int = 1029
-    INFO: int = 1030
-    ZMQ: int = 1031
+class SGXPort(IntEnum):
+    HTTPS = 1026
+    TLS = 1027
+    LOCAL = 1028
+    HTTP_ONLY = 1029
+    INFO = 1030
+    ZMQ = 1031
 
 
 class NodeChecks(WatchdogChecks):
@@ -95,21 +96,18 @@ class NodeChecks(WatchdogChecks):
                 SkaledPorts.BINARY_CONSENSUS.value,
                 SkaledPorts.ZMQ_BROADCAST.value
             ]:
-                port_check_passed = True
                 try:
                     port = schain_base_port + offset_endpoint
-                    port_check_passed = not is_port_open(self.node['ip'], port)
+                    if is_port_open(self.node['ip'], port):
+                        return False
                 except OSError:
-                    port_check_passed = False
-                if not port_check_passed:
                     return False
         sgx_ports = [element.value for element in SGXPort]
         for port in sgx_ports:
             try:
-                port_check_passed = not is_port_open(port)
+                if is_port_open(self.node['ip'], port):
+                    return False
             except OSError:
-                port_check_passed = False
-            if not port_check_passed:
                 return False
         return True
 
