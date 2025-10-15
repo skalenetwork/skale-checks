@@ -40,10 +40,7 @@ jobs:
         echo "Version $VERSION"
         bash ./scripts/build.sh
     - name: Publish to pip
-      run: |
-        bash ./scripts/publish.sh
-    - name: Checkout code
-      uses: actions/checkout@master
+      run: bash ./scripts/publish.sh
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
