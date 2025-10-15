@@ -3,7 +3,8 @@
 : "${PIP_USERNAME?Need to set PIP_USERNAME}"
 : "${PIP_PASSWORD?Need to set PIP_PASSWORD}"
 
-if [ $TEST = 1 ]; then
+if [ "$TEST" = "1" ]; then
+    echo "Uploading to testpypi"
     twine upload --repository testpypi dist/*
 else
     echo "Uploading to pypi"
