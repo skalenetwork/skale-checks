@@ -30,6 +30,7 @@ jobs:
     - name: Install python dependencies
       run: |
         python -m pip install --upgrade pip setuptools wheel twine
+        pip install -e .
         pip install -e .[dev]
     - name: Build library
       run: |
