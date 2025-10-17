@@ -9,4 +9,4 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I"]
+select = ["E", "F", "W"]
