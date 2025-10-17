@@ -7,10 +7,10 @@ from setuptools import (
 
 extras_require = {
     'linter': [
-        "flake8==3.7.9"
+        "ruff>=0.5.5"
     ],
     'dev': [
-        "twine==3.1.1"
+        "twine>=5.1.1"
     ],
 }
 
@@ -27,8 +27,9 @@ setup(
     author_email='support@skalelabs.com',
     url='https://github.com/skalenetwork/skale-checks',
     install_requires=[
-        "skale.py",
-        "elasticsearch==7.12.0"
+        "skale.py>=7.6dev0,<8",
+        "elasticsearch>=7.17.6,<8",  # Latest 7.x, compatible with Python 3.13 and ES 7.x
+        "PyYAML==6.0.3"
     ],
     python_requires='>=3.11,<4',
     extras_require=extras_require,
@@ -43,5 +44,7 @@ setup(
         'License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)',
         'Natural Language :: English',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
     ]
 )
