@@ -18,15 +18,15 @@
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import socket
+import errno
 from concurrent.futures import ThreadPoolExecutor
 
 import yaml
-from telnetlib import Telnet
 
 from skale_checks.checks import DEFAULT_REQUIREMENTS_PATH
 
 
-TELNET_TIMEOUT = 3
+SOCKET_TIMEOUT = 3
 
 
 def get_requirements(network="mainnet", requirements_path=None):
@@ -57,11 +57,17 @@ def get_active_nodes_count(skale, validator_id):
 
 
 def is_port_open(ip: str, port: int) -> bool:
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(SOCKET_TIMEOUT)
     try:
-        with Telnet(ip, port, timeout=TELNET_TIMEOUT):
-            pass
-    except socket.timeout:
+        result = sock.connect_ex((ip, port))
+        if result == 0 or result == errno.ECONNREFUSED:
+            return True
+        else:
+            return False
+    except (socket.gaierror, OSError):
+        # socket.gaierror: DNS resolution error (e.g., invalid hostname)
+        # OSError: Other socket errors like "Host unreachable"
         return False
-    except ConnectionRefusedError:
-        return True
-    return True
+    finally:
+        sock.close()
