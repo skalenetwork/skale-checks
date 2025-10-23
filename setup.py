@@ -31,7 +31,7 @@ setup(
         "elasticsearch>=7.17.6,<8",  # Latest 7.x, compatible with Python 3.13 and ES 7.x
         "PyYAML==6.0.3"
     ],
-    python_requires='>=3.13,<4',
+    python_requires='>=3.12,<4',
     extras_require=extras_require,
     keywords=['skale', 'checks'],
     packages=find_packages(),
@@ -43,6 +43,6 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)',
         'Natural Language :: English',
-        'Programming Language :: Python ::  3.13',
+        'Programming Language :: Python ::  3.12',
     ]
 )
