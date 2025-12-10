@@ -85,11 +85,15 @@ class NodeChecks(WatchdogChecks):
     def internal_ports(self) -> bool:
         """ Checks that internal ports are not accessible from the host """
         node_id = self.node['id']
-        active_schains_ids = self.skale.schains_internal.get_active_schain_ids_for_node(node_id)
-        schains = self.skale.schains.get_schains_for_node(node_id)
-        for schain_id in active_schains_ids:
-            schain_name = self.skale.schains.get(schain_id).name
-            schain_base_port = get_schain_base_port_on_node(schains, schain_name, self.node['port'])
+        active_schains_hashes = self.skale.schains_internal.get_active_schain_hashes_for_node(
+            node_id)
+        schains_hashes = self.skale.schains_internal.get_schain_hashes_for_node(node_id)
+        for schain_hash in active_schains_hashes:
+            schain_base_port = get_schain_base_port_on_node(
+                schains_hashes,
+                schain_hash,
+                self.node['port']
+            )
             for offset_endpoint in [
                 SkaledPorts.PROPOSAL.value,
                 SkaledPorts.CATCHUP.value,
