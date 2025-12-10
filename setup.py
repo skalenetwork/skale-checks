@@ -27,7 +27,7 @@ setup(
     author_email='support@skalelabs.com',
     url='https://github.com/skalenetwork/skale-checks',
     install_requires=[
-        "skale.py>=7.6dev0,<8",
+        "skale.py>=7.10.dev3,<8",
         "elasticsearch>=7.17.6,<8",  # Latest 7.x, compatible with Python 3.13 and ES 7.x
         "PyYAML==6.0.3"
     ],
