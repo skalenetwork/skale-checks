@@ -174,7 +174,7 @@ class NodeChecks(WatchdogChecks):
             print(f"ES Network/Timeout for node {self.node['id']}: {e}", flush=True)
             return False
 
-        except Exception as e:
+        except Exception:
             import traceback
             print(f"ES critical error for node ID {self.node['id']}:", flush=True)
             traceback.print_exc()
