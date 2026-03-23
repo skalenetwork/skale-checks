@@ -115,47 +115,67 @@ class NodeChecks(WatchdogChecks):
                 return False
         return True
 
+
     @check(['logs'])
     def logs(self) -> OptionalBool:
         es_args = {}
         try:
             if not self.es_credentials or len(self.es_credentials) != 3:
                 return None
+
             if self.logs_timeout:
                 es_args = {
                     'timeout': self.logs_timeout,
                     'max_retries': 3,
                     'retry_on_timeout': True
                 }
+
             es = Elasticsearch(self.es_credentials[0],
                                http_auth=self.es_credentials[1:3],
                                **es_args)
+
+            gap_seconds = self.requirements.get('logs_gap', 1800)
+
             query = {
-                'size': 1,
-                'sort': {
-                    '@timestamp': 'desc'
-                },
-                'query': {
-                    'match': {
-                        'fields.id': self.node['id']
-                    }
-                },
-            }
-            result = es.search(body=query)
-            if result['hits']['total']['value'] == 0:
-                return False
-            time_query = {
-                "size": 1,
-                "script_fields": {
-                    "now": {
-                        "script": "new Date().getTime()"
+                "size": 0,
+                "query": {
+                    "bool": {
+                        "must": [
+                            {
+                                "match": {
+                                    "fields.id": self.node['id']
+                                }
+                            }
+                        ],
+                        "filter": [
+                            {
+                                "range": {
+                                    "@timestamp": {
+                                        "gte": f"now-{int(gap_seconds)}s"
+                                    }
+                                }
+                            }
+                        ]
                     }
                 }
             }
-            time_response = es.search(body=time_query)
-            current_time = time_response['hits']['hits'][0]['fields']['now'][0]
-            last_timestamp = result['hits']['hits'][0]['sort'][0]
-            delta_time = (current_time - last_timestamp) / 1000
-            return delta_time < self.requirements['logs_gap']
-        except (ConnectionError, ElasticsearchException):
+
+            # Search across all indices EXCEPT system indices (which start with a dot)
+            # ignore_unavailable=True prevents errors if some indices are closed or deleted
+            result = es.search(
+                index="*,-.*",
+                body=query,
+                ignore_unavailable=True
+            )
+
+            return result['hits']['total']['value'] > 0
+
+        except (ConnectionError, ElasticsearchException) as e:
+            print(f"ES Network/Timeout for node {self.node['id']}: {e}", flush=True)
+            return False
+
+        except Exception as e:
+            import traceback
+            print(f"ES critical error for node ID {self.node['id']}:", flush=True)
+            traceback.print_exc()
             return False
