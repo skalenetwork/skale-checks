@@ -39,14 +39,7 @@ from skale_checks.checks.watchdog import WatchdogChecks
 warnings.filterwarnings("ignore")
 
 
-def _get_bool_env(name: str, default: bool = True) -> bool:
-    raw = os.getenv(name)
-    if raw is None:
-        return default
-    return raw.strip().lower() in {'1', 'true', 'yes', 'on'}
-
-
-ENABLE_INGESTION_LAG_CATCHER = _get_bool_env('ENABLE_INGESTION_LAG_CATCHER', False)
+ENABLE_INGESTION_LAG_CATCHER = os.getenv('ENABLE_INGESTION_LAG_CATCHER', 'False') == 'True'
 
 logger = logging.getLogger(__name__)
 
@@ -198,14 +191,14 @@ class NodeChecks(WatchdogChecks):
                     if debug_res['hits']['hits']:
                         last_log_time = debug_res['hits']['hits'][0]['_source'].get('@timestamp')
                         logger.warning(
-                            '[%s] LOGS check failed (0 logs in %ss), but latest ES log timestamp is %s',
+                            '[%s] LOGS failed: 0 logs in %ss; but latest ES log @timestamp=%s',
                             self.node['id'],
                             gap_seconds,
                             last_log_time,
                         )
                     else:
                         logger.warning(
-                            '[%s] LOGS check failed. No logs found for this node in current indices',
+                            '[%s] LOGS failed: no logs found for this node in current indices',
                             self.node['id'],
                         )
                 except Exception as e:
