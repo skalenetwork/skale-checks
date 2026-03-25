@@ -17,12 +17,12 @@
 #   You should have received a copy of the GNU Affero General Public License
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import warnings
-import os
 import logging
+import os
+import warnings
+from enum import IntEnum
 
 from elasticsearch import Elasticsearch, ElasticsearchException
-from enum import IntEnum
 from eth_utils import to_wei
 from skale.contracts.manager.nodes import NodeStatus
 from skale.dataclasses.skaled_ports import SkaledPorts
@@ -37,13 +37,9 @@ from skale_checks.checks.utils import get_active_nodes_count, is_port_open
 from skale_checks.checks.watchdog import WatchdogChecks
 
 warnings.filterwarnings("ignore")
-
-
-ENABLE_INGESTION_LAG_CATCHER = os.getenv('ENABLE_INGESTION_LAG_CATCHER', 'False') == 'True'
-
 logger = logging.getLogger(__name__)
 
-
+ENABLE_INGESTION_LAG_CATCHER = os.getenv('ENABLE_INGESTION_LAG_CATCHER', 'False') == 'True'
 MAX_SCHAINS_PER_NODE = 8
 
 
