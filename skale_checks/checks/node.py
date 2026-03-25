@@ -17,10 +17,12 @@
 #   You should have received a copy of the GNU Affero General Public License
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import logging
+import os
 import warnings
+from enum import IntEnum
 
 from elasticsearch import Elasticsearch, ElasticsearchException
-from enum import IntEnum
 from eth_utils import to_wei
 from skale.contracts.manager.nodes import NodeStatus
 from skale.dataclasses.skaled_ports import SkaledPorts
@@ -35,8 +37,9 @@ from skale_checks.checks.utils import get_active_nodes_count, is_port_open
 from skale_checks.checks.watchdog import WatchdogChecks
 
 warnings.filterwarnings("ignore")
+logger = logging.getLogger(__name__)
 
-
+ENABLE_INGESTION_LAG_CATCHER = os.getenv('ENABLE_INGESTION_LAG_CATCHER', 'False') == 'True'
 MAX_SCHAINS_PER_NODE = 8
 
 
@@ -118,44 +121,94 @@ class NodeChecks(WatchdogChecks):
     @check(['logs'])
     def logs(self) -> OptionalBool:
         es_args = {}
+        logger.debug('Checking ES logs for node %s', self.node['id'])
         try:
             if not self.es_credentials or len(self.es_credentials) != 3:
                 return None
+
             if self.logs_timeout:
                 es_args = {
                     'timeout': self.logs_timeout,
                     'max_retries': 3,
                     'retry_on_timeout': True
                 }
+
             es = Elasticsearch(self.es_credentials[0],
                                http_auth=self.es_credentials[1:3],
                                **es_args)
+
+            gap_seconds = self.requirements.get('logs_gap', 1800)
+
             query = {
-                'size': 1,
-                'sort': {
-                    '@timestamp': 'desc'
-                },
-                'query': {
-                    'match': {
-                        'fields.id': self.node['id']
-                    }
-                },
-            }
-            result = es.search(body=query)
-            if result['hits']['total']['value'] == 0:
-                return False
-            time_query = {
-                "size": 1,
-                "script_fields": {
-                    "now": {
-                        "script": "new Date().getTime()"
+                "size": 0,
+                "query": {
+                    "bool": {
+                        "must": [
+                            {
+                                "match": {
+                                    "fields.id": self.node['id']
+                                }
+                            }
+                        ],
+                        "filter": [
+                            {
+                                "range": {
+                                    "@timestamp": {
+                                        "gte": f"now-{int(gap_seconds)}s"
+                                    }
+                                }
+                            }
+                        ]
                     }
                 }
             }
-            time_response = es.search(body=time_query)
-            current_time = time_response['hits']['hits'][0]['fields']['now'][0]
-            last_timestamp = result['hits']['hits'][0]['sort'][0]
-            delta_time = (current_time - last_timestamp) / 1000
-            return delta_time < self.requirements['logs_gap']
-        except (ConnectionError, ElasticsearchException):
+
+            # Search across all indices EXCEPT system indices (which start with a dot)
+            # ignore_unavailable=True prevents errors if some indices are closed or deleted
+            result = es.search(
+                index="*,-.*",
+                body=query,
+                ignore_unavailable=True
+            )
+
+            total_hits = result['hits']['total']['value']
+
+            # ==== INGESTION LAG CATCHER ====
+            # Optional diagnostic fallback for intermittent Elasticsearch ingestion lag.
+            if ENABLE_INGESTION_LAG_CATCHER and total_hits == 0:
+                # Request the most recent log without time restrictions
+                debug_query = {
+                    "size": 1,
+                    "sort": [{"@timestamp": {"order": "desc"}}],
+                    "query": {"match": {"fields.id": self.node['id']}}
+                }
+                try:
+                    debug_res = es.search(index="*,-.*", body=debug_query, ignore_unavailable=True)
+                    if debug_res['hits']['hits']:
+                        last_log_time = debug_res['hits']['hits'][0]['_source'].get('@timestamp')
+                        logger.warning(
+                            '[%s] LOGS failed: 0 logs in %ss; but latest ES log @timestamp=%s',
+                            self.node['id'],
+                            gap_seconds,
+                            last_log_time,
+                        )
+                    else:
+                        logger.warning(
+                            '[%s] LOGS failed: no logs found for this node in current indices',
+                            self.node['id'],
+                        )
+                except Exception as e:
+                    logger.warning('[%s] Ingestion lag debug query failed: %s',
+                                   self.node['id'],
+                                   e)
+            # ===============================
+
+            return total_hits > 0
+
+        except (ConnectionError, ElasticsearchException) as e:
+            logger.warning('ES network/timeout for node %s: %s', self.node['id'], e)
+            return False
+
+        except Exception as e:
+            logger.exception('ES critical error for node ID %s: %s', self.node['id'], e)
             return False
