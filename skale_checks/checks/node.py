@@ -18,6 +18,8 @@
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import warnings
+import os
+import logging
 
 from elasticsearch import Elasticsearch, ElasticsearchException
 from enum import IntEnum
@@ -35,6 +37,18 @@ from skale_checks.checks.utils import get_active_nodes_count, is_port_open
 from skale_checks.checks.watchdog import WatchdogChecks
 
 warnings.filterwarnings("ignore")
+
+
+def _get_bool_env(name: str, default: bool = True) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+ENABLE_INGESTION_LAG_CATCHER = _get_bool_env('ENABLE_INGESTION_LAG_CATCHER', False)
+
+logger = logging.getLogger(__name__)
 
 
 MAX_SCHAINS_PER_NODE = 8
@@ -118,7 +132,7 @@ class NodeChecks(WatchdogChecks):
     @check(['logs'])
     def logs(self) -> OptionalBool:
         es_args = {}
-        print(f"Checking ES logs for node {self.node['id']}", flush=True)
+        logger.debug('Checking ES logs for node %s', self.node['id'])
         try:
             if not self.es_credentials or len(self.es_credentials) != 3:
                 return None
@@ -171,8 +185,8 @@ class NodeChecks(WatchdogChecks):
             total_hits = result['hits']['total']['value']
 
             # ==== INGESTION LAG CATCHER ====
-            # TODO: Remove this block before releasing the library update
-            if total_hits == 0:
+            # Optional diagnostic fallback for intermittent Elasticsearch ingestion lag.
+            if ENABLE_INGESTION_LAG_CATCHER and total_hits == 0:
                 # Request the most recent log without time restrictions
                 debug_query = {
                     "size": 1,
@@ -183,27 +197,29 @@ class NodeChecks(WatchdogChecks):
                     debug_res = es.search(index="*,-.*", body=debug_query, ignore_unavailable=True)
                     if debug_res['hits']['hits']:
                         last_log_time = debug_res['hits']['hits'][0]['_source'].get('@timestamp')
-                        print(
-                            f"[{self.node['id']}] CHECK FAILED (0 logs in {gap_seconds} sec). But DB HAS a log with timestamp: {last_log_time}",
-                            flush=True)
+                        logger.warning(
+                            '[%s] LOGS check failed (0 logs in %ss), but latest ES log timestamp is %s',
+                            self.node['id'],
+                            gap_seconds,
+                            last_log_time,
+                        )
                     else:
-                        print(
-                            f"[{self.node['id']}] CHECK FAILED. There have NEVER been any logs from this node in the current indices.",
-                            flush=True)
+                        logger.warning(
+                            '[%s] LOGS check failed. No logs found for this node in current indices',
+                            self.node['id'],
+                        )
                 except Exception as e:
-                    print(f"[{self.node['id']}] Error during debug query: {e}", flush=True)
+                    logger.warning('[%s] Ingestion lag debug query failed: %s',
+                                   self.node['id'],
+                                   e)
             # ===============================
 
             return total_hits > 0
 
         except (ConnectionError, ElasticsearchException) as e:
-            import sys
-            print(f"ES Network/Timeout for node {self.node['id']}: {e}", file=sys.stderr,
-                  flush=True)
+            logger.warning('ES network/timeout for node %s: %s', self.node['id'], e)
             return False
 
-        except Exception:
-            import sys, traceback
-            print(f"ES critical error for node ID {self.node['id']}:", file=sys.stderr, flush=True)
-            traceback.print_exc(file=sys.stderr)
+        except Exception as e:
+            logger.exception('ES critical error for node ID %s: %s', self.node['id'], e)
             return False
